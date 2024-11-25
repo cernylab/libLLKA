@@ -1,0 +1,10 @@
+data_quote_in_quote
+
+_some.double_quote_string "ABC"
+_some.single_quote_string 'ABC'
+_some.single_quote_in_double_quote_string "AB'C"
+_some.double_quote_in_single_quote_string 'AB"C'
+_some.single_quote_in_single_quote_string 'AB'C'
+_some.double_quote_in_double_quote_string "AB"C"
+_some.single_quote_in_single_quote_string_terminating 'ABC''
+_some.double_quote_in_double_quote_string_terminating "ABC""

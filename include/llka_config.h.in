@@ -1,0 +1,8 @@
+#ifndef _LLKA_CONFIG_H
+#define _LLKA_CONFIG_H
+
+#cmakedefine LLKA_PLATFORM_WIN32
+#cmakedefine LLKA_PLATFORM_UNIX
+#cmakedefine LLKA_PLATFORM_EMSCRIPTEN
+
+#endif /* _LLKA_CONFIG_H */

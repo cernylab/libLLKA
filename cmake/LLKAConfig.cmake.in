@@ -1,0 +1,38 @@
+@PACKAGE_INIT@
+
+set_and_check(LLKA_ROOT_DIR
+              "@PACKAGE_CMAKE_INSTALL_PREFIX@")
+
+set_and_check(LLKA_INCLUDE_DIR
+              "@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@")
+
+set_and_check(LLKA_LIB_DIR
+              "@PACKAGE_CMAKE_INSTALL_LIBDIR@")
+
+list(APPEND LLKA_BIN_DIR
+            "@PACKAGE_CMAKE_INSTALL_BINDIR@")
+
+list(APPEND LLKA_CFLAGS
+            -I"@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@")
+
+list(APPEND LLKA_LDFLAGS
+            -L"@PACKAGE_CMAKE_INSTALL_LIBDIR@")
+
+include("${CMAKE_CURRENT_LIST_DIR}/libLLKA_targets.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/libLLKA_targets-release.cmake")
+
+if (@BUILD_STATIC_LIBRARY@)
+    set(LLKA_STATIC_LIBRARIES libLLKA_STATIC)
+else ()
+    set(LLKA_STATIC_LIBRARIES libLLKA_STATIC-NOTFOUND)
+endif ()
+
+if (@BUILD_SHARED_LIBRARY@)
+    set(LLKA_LIBRARIES libLLKA_SHARED)
+else ()
+    set(LLKA_LIBRARIES libLLKA_SHARED-NOTFOUND)
+endif ()
+
+mark_as_advanced(LLKA_LIBRARIES LLKA_STATIC_LIBRARIES)
+
+check_required_components(LLKA)

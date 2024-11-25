@@ -1,0 +1,3 @@
+data_unterminated_quote
+
+_some.unterminated "ABC
