@@ -9,6 +9,11 @@ if (EMSCRIPTEN)
     set(CPP_EXTRA_LINK embind)
 endif ()
 
+add_executable(test_basics test_basics.cpp effedup.cpp)
+target_compile_definitions(test_basics PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS})
+target_link_libraries(test_basics ${LLKA_LIB_LINK})
+add_test(NAME Basics COMMAND test_basics)
+
 add_executable(test_structure_manipulation test_structure_manipulation.cpp effedup.cpp)
 target_compile_definitions(test_structure_manipulation PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS})
 target_link_libraries(test_structure_manipulation ${LLKA_LIB_LINK})

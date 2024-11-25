@@ -180,9 +180,11 @@ auto sign(const double v) -> double
     ID asBits;
     ID sgn;
 
-    int64_t signBitMask = 0x8000000000000000;
     asBits.d = v;
-    sgn.i = (signBitMask & asBits.i) | (0x3FF0000000000000);
+
+    int64_t signBitMask = 0x8000000000000000;
+    int64_t oneMask = 0x3FF0000000000000 * (asBits.i != int64_t(0));
+    sgn.i = (signBitMask & asBits.i) | oneMask;
 
     return sgn.d;
 }
