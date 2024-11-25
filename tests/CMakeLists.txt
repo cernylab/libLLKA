@@ -64,7 +64,7 @@ target_compile_definitions(test_measurements PRIVATE ${LIBLLKA_GLOBAL_DEFINITION
 target_link_libraries(test_measurements ${LLKA_LIB_LINK})
 add_test(NAME Measurements COMMAND test_measurements)
 
-if ((NOT EMSCRIPTEN) OR (EMX_JS_BUILD_MODE STREQUAL "Node"))
+if ((NOT EMSCRIPTEN) OR (EMX_JS_BUILD_MODE STREQUAL "Node") OR (EMX_JS_BUILD_MODE STREQUAL "Node_SIMD"))
     add_executable(test_classification test_classification.cpp effedup.cpp)
     target_compile_definitions(test_classification PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS})
     target_link_libraries(test_classification ${LLKA_LIB_LINK})
