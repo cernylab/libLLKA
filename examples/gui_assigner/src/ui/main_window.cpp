@@ -131,7 +131,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_browseParams = new QFileDialog{this, "Select directory with classification parameters files", m_currentParamsPath, "CSV file (*.csv)"};
     m_browseParams->setFileMode(QFileDialog::Directory);
 
-    m_browseCif = new QFileDialog{this, "Select Cif file with your structure", m_currentCifPath, "mmCif file (*.cif *.mmcif)"};
+    m_browseCif = new QFileDialog{this, "Select Cif file with your structure", m_currentCifPath, "mmCIF file (*.cif *.mmcif)"};
     m_browseCif->setFileMode(QFileDialog::ExistingFile);
 
     m_setupTracepointsDlg = new SetupTracepointsDlg{this};

@@ -437,7 +437,7 @@ auto tagToCategoryKeyword(const std::string &key, size_t lineNo)
         throw CifParseError{"Invalid category name token on line " + std::to_string(lineNo)};
 
     if (keyword.empty())
-        return std::make_tuple(std::string{}, std::string{category.substr(1)});    // "Swap" keyword for category because we need to have anonymous categories to deal with non-mmCif data
+        return std::make_tuple(std::string{}, std::string{category.substr(1)});    // "Swap" keyword for category because we need to have anonymous categories to deal with non-mmCIF data
 
     return std::make_tuple(std::string{category.substr(1)}, std::string{keyword});
 }

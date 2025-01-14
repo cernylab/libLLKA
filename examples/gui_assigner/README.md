@@ -13,4 +13,4 @@ Usage
 
 The example needs to be pointed to a directory with NtC classification parameters. Setting the "Path parameter directory" to the "assets" directory if this repository is sufficient.
 
-Note that the example can only process mmCif files.
+Note that the example can only process mmCIF files.
