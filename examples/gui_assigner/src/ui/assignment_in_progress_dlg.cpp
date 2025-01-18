@@ -27,7 +27,7 @@ void AssignmentInProgressDlg::onDone()
 void AssignmentInProgressDlg::onProgress(Stage stage, int percentDone)
 {
     if (stage == ReadingCif)
-        ui->ql_progress->setText("Reading Cif...");
+        ui->ql_progress->setText("Reading mmCIF...");
     else if (stage == Assigning)
         ui->ql_progress->setText(QString{"Assigning: %1 % done..."}.arg(percentDone));
 }

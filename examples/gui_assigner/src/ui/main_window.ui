@@ -20,7 +20,7 @@
       <item row="0" column="0">
        <widget class="QLabel" name="ql_paramsDirPath">
         <property name="text">
-         <string>Path to parameter directory</string>
+         <string>Path to directory with parameters files</string>
         </property>
        </widget>
       </item>
@@ -41,7 +41,7 @@
       <item row="1" column="0">
        <widget class="QLabel" name="ql_cifFilePath">
         <property name="text">
-         <string>Path to Cif file with the structure</string>
+         <string>Path to mmCIF file with the structure</string>
         </property>
        </widget>
       </item>

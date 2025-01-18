@@ -77,14 +77,14 @@ void Worker::work()
     }
 }
 
-auto runAssignment(const LLKA::ClassificationContext &ctx, std::filesystem::path pathToCif) -> LoadedStructure
+auto runAssignment(const LLKA::ClassificationContext &ctx, std::filesystem::path pathToCif, QWidget *dialogParent) -> LoadedStructure
 {
     auto thread = new QThread{};
     Worker worker{ctx, std::move(pathToCif)};
     worker.moveToThread(thread);
 
     QString failMessage;
-    AssignmentInProgressDlg dlg{};
+    AssignmentInProgressDlg dlg{dialogParent};
 
     // Clean up safely when we are done
     QObject::connect(thread, &QThread::finished, thread, &QThread::deleteLater);
