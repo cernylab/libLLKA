@@ -17,7 +17,7 @@ The window of the `gui_assigner` program is shown below.[^1]
 
 To run NtC assignment, you first need to point the `gui_assigner` to a directory with the [assignment parametrization files](../../README.md#NtC-assignment-parametrization). Enter the path to the directory where these files are located into the `Path to directory with parameters files` into the field or use the `Browse` button.
 
-Next pick a file with the structure to analyze. Mind that `gui_assigner` can only process mmCIF files.
+Next pick a file with the structure to analyze. Mind that `gui_assigner` can only process mmCIF files. Finally, click on the _Assign_ button.
 
 Once the assignment is complete, a table with the list of __dinucleotide steps__ is displayed. The table lists the assigned _CANA_ and _NtC_ classes, the _Confal score_ and the _Root mean square distance_ from the geometry of the reference __dinucleotide step__.[^2]
 
