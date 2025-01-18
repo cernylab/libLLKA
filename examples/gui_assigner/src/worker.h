@@ -55,6 +55,6 @@ signals:
     void reportProgress(AssignmentInProgressDlg::Stage stage, int percentDone);
 };
 
-auto runAssignment(const LLKA::ClassificationContext &ctx, std::filesystem::path pathToCif) -> LoadedStructure;
+auto runAssignment(const LLKA::ClassificationContext &ctx, std::filesystem::path pathToCif, QWidget *dialogParent) -> LoadedStructure;
 
 #endif // _WORKER_H

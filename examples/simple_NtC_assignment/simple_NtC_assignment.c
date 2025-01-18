@@ -6,10 +6,10 @@
   processing library to assign NtC classes to a nucleic acid
   structure.
 
-  The example accepts a mmCif file with the structure as
+  The example accepts a mmCIF file with the structure as
   a command line parameter. The code shown here:
 
-  1) Reads the mmCif file and creates an internal representation
+  1) Reads the mmCIF file and creates an internal representation
      of the structure.
   2) Splits the structure into a list of dinucletide steps.
   3) Classifies each step, meaning that it attempts to assign
