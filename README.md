@@ -16,6 +16,7 @@ On a UNIX system, issue the following commands to build libLLKA
 
     cd <path_to_libLLKA_source_code_directory>
     mkdir build
+    cd build
     cmake .. -DEIGEN_INCLUDE_DIR=/path/to/Eigen
     make
 
