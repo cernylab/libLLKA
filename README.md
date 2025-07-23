@@ -58,7 +58,7 @@ There are two example programs that may be used as a very simplifed version of t
 
    A CLI-only tool that reads a structure from a mmCIF file, performs the NtC assignment and writes the results into a mmCIF file with additional categories that contain the NtC assignment results.
 
- - [similarity_connectivity](examples/similatiry_connectivity)
+ - [similarity_connectivity](examples/similarity_connectivity)
 
    A CLI-only tool that reads a structure from a mmCIF file, performs the NtC assignment and writes the results into a mmCIF file with additional categories that contain the NtC assignment results. It also produces the "similarity" and "connectivity" data in JSON format. The level of details can be controled by additional commandline switches, see --help.
 
