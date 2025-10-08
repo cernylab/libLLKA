@@ -54,6 +54,37 @@ const int DISTANCE_PRECISION = 0.001;
 const int EULER_PRECISION = 0.1;
 const int RMSD_PRECISION = 0.001;
 
+typedef struct LLKA_SortedStep{
+    bool havePrevStep = false;
+    bool haveNextStep = false;
+    LLKA_Structure currStep;
+    LLKA_Structure prevStep;
+    LLKA_Structure nextStep;
+} LLKA_SortedStep;
+
+typedef struct LLKA_SortedSteps{
+    LLKA_SortedStep *steps;
+    size_t nSteps;
+} LLKA_SortedSteps;
+
+typedef struct LLKA_AnalyzedStep{
+    const char *auth_asym_id_1;
+    const char *label_comp_id_1;
+    int32_t PDB_ins_code_1;
+    int32_t auth_seq_id_1;
+    char label_alt_id_1;
+    const char *auth_asym_id_2;
+    const char *label_comp_id_2;
+    int32_t PDB_ins_code_2;
+    int32_t auth_seq_id_2;
+    char label_alt_id_2;
+} LLKA_AnalyzedStep;
+
+typedef struct LLKA_AnalyzedSteps{
+    LLKA_AnalyzedStep* steps;
+    size_t nSteps;
+} LLKA_AnalyzedSteps;
+
 char* create_full_path(const char *filename) {
     const char *prefix_path = getenv("DNATCO_ASSETS_PATH");
 
@@ -1132,7 +1163,6 @@ double roundTo(double number, double precision){
 bool fileExists(std::string name){
     std::ifstream jsonFile(name);
     if (jsonFile.is_open()){
-        std::cerr << "File \"" << name << "\" already exists!" << std::endl;
         jsonFile.close();
         return true;
     } else {
@@ -1144,15 +1174,15 @@ nlohmann::json createJson(){
     return nlohmann::json::object();
 }
 
-LLKA_RetCode saveJson(nlohmann::json jsonData, std::string fileName){
+LLKA_RetCode saveJson(nlohmann::ordered_json jsonData, std::string fileName){
 //    std::ofstream outputFile(fileName+".json");
     std::ofstream outputFile(fileName);
     if(outputFile.is_open()){
         outputFile << jsonData.dump(0);
         outputFile.close();
-        std::cout << "Data succesfully written to "+fileName << std::endl;
+        std::cout << "Data was succesfully written to: "+fileName << std::endl;
     }else{
-        std::cerr << "No file named: "<<fileName <<" , found! " << std::endl;
+        std::cerr << "No file named: "<<fileName <<", found! " << std::endl;
         return LLKA_E_NO_FILE;
     }
     return LLKA_OK;
@@ -1244,7 +1274,7 @@ bool cutOffDistanceCheck(double cutOffDistance, LLKA_Connectivity conns){
 
 // Main function to calculate connectivity
 LLKA_RetCode calculateConnectivity(
-    LLKA_Structures &steps,
+    LLKA_SortedSteps &steps,
     LLKA_NtC ntcs,
     size_t stepId,
     double cutDistance,
@@ -1260,6 +1290,7 @@ LLKA_RetCode calculateConnectivity(
     bool isSetPrevNtCs;
     LLKA_NtC prevNtCCon;
     LLKA_NtC nextNtCCon;
+    LLKA_RetCode tRet;
 
     if(prevNtC == "default"){
         isSetPrevNtCs = false;
@@ -1285,12 +1316,9 @@ LLKA_RetCode calculateConnectivity(
 
     nlohmann::json jsonData = createJson();
 
-    if(fileExists(fileName)){
-        return LLKA_E_NO_FILE;
-    }
     // Main process of calculating connectivity 
     
-    for(size_t i = 0; i <= steps.nStrus-1; i++){
+    for(size_t i = 0; i <= steps.nSteps-1; i++){
         //Check if stepIdIsSet, if is true then skip all others calculation
         if(isSetStepId){
             if(i != stepId){
@@ -1310,18 +1338,22 @@ LLKA_RetCode calculateConnectivity(
             int totalWritten = 0;
             // Next connectivity working
             for(int a = 0; a < 96; a++){
-                if(i == steps.nStrus-1){
-                    totalWritten++;
-                    break;
-                }
                 if(isSetPrevNtCs && (!isSetNextNtCs)){
                     break;
                 }
                 if(nextNtCCon != LLKA_INVALID_NTC && nextNtCCon != NTCS[a]){
                     continue;
                 }
+                if(!(steps.steps[i].haveNextStep)){
+                    break;
+                }
                 LLKA_Connectivity connData;
-                calculateConnectivitiesStructureSingle(steps.strus[i], NTCS[o], steps.strus[i+1], NTCS[a], connData);
+
+                tRet = calculateConnectivitiesStructureSingle(steps.steps[i].currStep, NTCS[o], steps.steps[i].nextStep, NTCS[a], connData);
+                // If calculation failed, return error code
+                if(tRet != LLKA_OK){
+                  return tRet;
+                }
                 if(isSetCutDistance){
                     if(a == 0){
                         smallestData = connData;
@@ -1337,11 +1369,17 @@ LLKA_RetCode calculateConnectivity(
                         }
                     }
                     if(cutOffDistanceCheck(cutDistance, connData)){
-                        writeConnectivityToJson(&connData, i, NTCS[o], NTCS[a], true, jsonData);
+                        tRet = writeConnectivityToJson(&connData, i, NTCS[o], NTCS[a], true, jsonData);
+                        if(tRet != LLKA_OK){
+                          return tRet;
+                        }
                         totalWritten++;
                     }
                 }else{
-                    writeConnectivityToJson(&connData, i, NTCS[o], NTCS[a], true, jsonData);
+                    tRet = writeConnectivityToJson(&connData, i, NTCS[o], NTCS[a], true, jsonData);
+                    if(tRet != LLKA_OK){
+                      return tRet;
+                    }
                     totalWritten++;
                 }
             }
@@ -1352,18 +1390,20 @@ LLKA_RetCode calculateConnectivity(
             smallestIndxData = 0;
             totalWritten = 0;
             for(int b = 0; b < 96; b++){
-                if(i == 0){
-                    totalWritten++;
-                    break;
-                }
                 if(isSetNextNtCs && (!isSetPrevNtCs)){
                     break;
                 }
                 if(prevNtCCon != LLKA_INVALID_NTC && prevNtCCon != NTCS[b]){
                     continue;
                 }
+                if(!(steps.steps[i].havePrevStep)){
+                    break;
+                }
                 LLKA_Connectivity connData;
-                calculateConnectivitiesStructureSingle(steps.strus[i-1], NTCS[b], steps.strus[i], NTCS[o], connData);
+                tRet = calculateConnectivitiesStructureSingle(steps.steps[i].prevStep, NTCS[b], steps.steps[i].currStep, NTCS[o], connData);
+                if(tRet != LLKA_OK){
+                  return tRet;
+                }
                 if(isSetCutDistance){
                     if(b == 0){
                         smallestData = connData;
@@ -1379,16 +1419,25 @@ LLKA_RetCode calculateConnectivity(
                         }
                     }
                     if(cutOffDistanceCheck(cutDistance, connData)){
-                        writeConnectivityToJson(&connData, i, NTCS[b], NTCS[o], false, jsonData);
+                        tRet = writeConnectivityToJson(&connData, i, NTCS[b], NTCS[o], false, jsonData);
+                        if(tRet != LLKA_OK){
+                          return tRet;
+                        }
                         totalWritten++;
                     }
                 }else{
-                    writeConnectivityToJson(&connData, i, NTCS[b], NTCS[o], false, jsonData);
+                    tRet = writeConnectivityToJson(&connData, i, NTCS[b], NTCS[o], false, jsonData);
+                    if(tRet != LLKA_OK){
+                      return tRet;
+                    }
                     totalWritten++;
                 }
             }
             if(totalWritten == 0){
-                writeConnectivityToJson(&smallestData, i, NTCS[smallestIndxData], NTCS[o], false, jsonData);    
+                tRet = writeConnectivityToJson(&smallestData, i, NTCS[smallestIndxData], NTCS[o], false, jsonData);
+                if(tRet != LLKA_OK){
+                  return tRet;
+                }
             }
 
         }
@@ -1426,12 +1475,9 @@ LLKA_RetCode calculateSimilarity(
     bool isSetNtCs = ntcs != LLKA_INVALID_NTC;
     bool isSetStepId = (stepId != def);
     bool isSetCutDistance = (cutRMSD != def);
+    LLKA_RetCode tRet;
 
     nlohmann::json jsonData = createJson();
-
-    if(fileExists(fileName)){
-        return LLKA_E_NO_FILE;
-    }
 
     //Calculating similarity
     for(size_t i = 0; i<steps.nStrus; i++){
@@ -1451,7 +1497,10 @@ LLKA_RetCode calculateSimilarity(
                 }
             }
             LLKA_Similarity simData;
-            calculateSimilarities(steps.strus[i], NTCS[a],simData);  
+            tRet = calculateSimilarities(steps.strus[i], NTCS[a],simData);
+            if(tRet != LLKA_OK){
+              return tRet;
+            }
             if(isSetCutDistance){
                 if(a == 0){
                     smallestData = simData;
@@ -1465,21 +1514,33 @@ LLKA_RetCode calculateSimilarity(
                     }
                 }
                 if(simData.rmsd < cutRMSD){
-                    writeSimilaritiesToJson(simData, jsonData, NTCS[a], i+1);
+                    tRet = writeSimilaritiesToJson(simData, jsonData, NTCS[a], i+1);
+                    if(tRet != LLKA_OK){
+                      return tRet;
+                    }
                     totalWritten++;
                 }
             }else{
-                writeSimilaritiesToJson(simData, jsonData, NTCS[a], i+1); 
+                tRet = writeSimilaritiesToJson(simData, jsonData, NTCS[a], i+1);
+                if(tRet != LLKA_OK){
+                  return tRet;
+                }
                 totalWritten++;
             }
 
         }
         if(totalWritten == 0){
-            writeSimilaritiesToJson(smallestData, jsonData, NTCS[smallestIndxData], i+1); 
+            tRet = writeSimilaritiesToJson(smallestData, jsonData, NTCS[smallestIndxData], i+1);
+            if(tRet != LLKA_OK){
+              return tRet;
+            }
         }        
     }
     //Saving
-    saveJson(jsonData, fileName);
+    tRet = saveJson(jsonData, fileName);
+    if(tRet != LLKA_OK){
+      return tRet;
+    }
     return LLKA_OK;
 }
 
@@ -1504,14 +1565,105 @@ LLKA_RetCode testConnectivityPrev(LLKA_Structure stepsFirst, LLKA_Structure step
     return LLKA_OK;
 }
 
+LLKA_RetCode analyzeStep(LLKA_Structure &step, LLKA_AnalyzedStep &result){
+    for (int j = 0; j < step.nAtoms-1; j++){
+        if(j == 0){
 
+            result.auth_asym_id_1 = step.atoms[j].auth_asym_id;
+            result.label_comp_id_1 = step.atoms[j].label_comp_id;
+            result.PDB_ins_code_1 = step.atoms[j].pdbx_PDB_model_num;
+            result.auth_seq_id_1 = step.atoms[j].auth_seq_id;
+            result.label_alt_id_1 = step.atoms[j].label_alt_id;
+            continue;
+        }
+        if( strcmp(result.auth_asym_id_1, step.atoms[j].auth_asym_id) == 0 && strcmp(result.label_comp_id_1, step.atoms[j].label_comp_id) == 0 &&
+        result.PDB_ins_code_1 == step.atoms[j].pdbx_PDB_model_num && result.auth_seq_id_1 == step.atoms[j].auth_seq_id &&
+        result.label_alt_id_1 == step.atoms[j].label_alt_id)
+        {
+            continue;
+        }
+        else
+        {
+            result.auth_asym_id_2 = step.atoms[j].auth_asym_id;
+            result.label_comp_id_2 = step.atoms[j].label_comp_id;
+            result.PDB_ins_code_2 = step.atoms[j].pdbx_PDB_model_num;
+            result.auth_seq_id_2 = step.atoms[j].auth_seq_id;
+            result.label_alt_id_2 = step.atoms[j].label_alt_id;
+            break;
+        }
+    }
+    return LLKA_OK;
+}
+
+LLKA_RetCode sortSteps(LLKA_Structures &steps, LLKA_SortedSteps &sortedSteps) {
+    LLKA_RetCode tRet;
+    sortedSteps.nSteps = steps.nStrus;
+    sortedSteps.steps = new LLKA_SortedStep[steps.nStrus];
+
+    LLKA_AnalyzedSteps allSteps;
+    allSteps.nSteps = steps.nStrus;
+    allSteps.steps = new LLKA_AnalyzedStep[steps.nStrus];
+
+    for (size_t s = 0; s < steps.nStrus; s++) {
+        LLKA_AnalyzedStep analyzedStep;
+        tRet = analyzeStep(steps.strus[s], analyzedStep);
+        if(tRet != LLKA_OK){
+          return tRet;
+        }
+        allSteps.steps[s] = analyzedStep;
+    }
+
+    for (size_t i = 0; i < steps.nStrus; i++) {
+        LLKA_SortedStep currSortStep{};
+
+        currSortStep.currStep = steps.strus[i];
+        currSortStep.havePrevStep = false;
+        currSortStep.haveNextStep = false;
+
+        LLKA_AnalyzedStep currStepInformation = allSteps.steps[i];
+
+        for (size_t j = 0; j < steps.nStrus; j++) {
+            if (i == j) continue;
+            LLKA_AnalyzedStep prevStepInformation = allSteps.steps[j];
+            if (strcmp(currStepInformation.auth_asym_id_1, prevStepInformation.auth_asym_id_2) == 0 &&
+                strcmp(currStepInformation.label_comp_id_1, prevStepInformation.label_comp_id_2) == 0 &&
+                currStepInformation.PDB_ins_code_1 == prevStepInformation.PDB_ins_code_2 &&
+                currStepInformation.auth_seq_id_1 == prevStepInformation.auth_seq_id_2 &&
+                currStepInformation.label_alt_id_1 == prevStepInformation.label_alt_id_2)
+            {
+                currSortStep.havePrevStep = true;
+                currSortStep.prevStep = steps.strus[j];
+                break;
+            }
+        }
+
+        for (size_t j = 0; j < steps.nStrus; j++) {
+            if (i == j) continue;
+
+            LLKA_AnalyzedStep nextStepInformation = allSteps.steps[j];
+            if (strcmp(currStepInformation.auth_asym_id_2, nextStepInformation.auth_asym_id_1) == 0 &&
+                strcmp(currStepInformation.label_comp_id_2, nextStepInformation.label_comp_id_1) == 0 &&
+                currStepInformation.PDB_ins_code_2 == nextStepInformation.PDB_ins_code_1 &&
+                currStepInformation.auth_seq_id_2 == nextStepInformation.auth_seq_id_1 &&
+                currStepInformation.label_alt_id_2 == nextStepInformation.label_alt_id_1)
+            {
+                currSortStep.haveNextStep = true;
+                currSortStep.nextStep = steps.strus[j];
+                break;
+            }
+        }
+        sortedSteps.steps[i] = currSortStep;
+    }
+    delete[] allSteps.steps;
+    return LLKA_OK;
+}
 
 std::string getStepName(LLKA_ImportedStructure importedStru, int idOfStep, LLKA_Structures &steps){
     return deriveDNATCOStepName(importedStru.entry.id, structureHasMultipleModels(&steps),&steps.strus[idOfStep]);
 }
 
 void creatingStepIdFile(LLKA_ImportedStructure importedStru, LLKA_Structures &steps, std::string prefix){
-    nlohmann::json information = createJson();
+    nlohmann::ordered_json information = createJson();
     for(size_t i = 0; i < steps.nStrus; i++){
         information["steps"][std::to_string(i+1)] = getStepName(importedStru, i,steps);
     }
@@ -1524,7 +1676,6 @@ LLKA_RetCode createAndWriteCifFile(std::string cifString, std::string fileName){
     if(!outputFile){
         return LLKA_E_CANNOT_READ_FILE;
     }
-
     outputFile << cifString;
     outputFile.close();
     std::cout << "Data succesfully written to "+fileName << std::endl;
@@ -1545,11 +1696,12 @@ int main(int argc, char *argv[])
     LLKA_ImportedStructure importedStru = {};
     LLKA_ClassifiedSteps classifiedSteps = {};
     LLKA_AverageConfal avgConfal = {};
+    LLKA_SortedSteps sortedSteps = {};
     nlohmann::json jsonFile;
 
     // Section to setup flags or input options
     // TODO: Write more description
-    CLI::App app{"Calculating connectivity and similarity"};
+    CLI::App app{"Calculation of Similarity & Connectivity, Expand mmcif file"};
 
     argv = app.ensure_utf8(argv);
 
@@ -1565,6 +1717,7 @@ int main(int argc, char *argv[])
     // bool
     bool version = false;
     bool test = false;
+    bool overwrite = false;
     // string
     std::string currNtC = "default";
     std::string prevNtCCon = "default";
@@ -1589,6 +1742,7 @@ int main(int argc, char *argv[])
     app.add_option("-p,--prefix", outputPrefix, "Prefix for output files (default: entry.id content)");
     app.add_flag("-v,--version", version, "Show application version");
     app.add_flag("-t,--test", test, "Some nice description.. :)")->group("");
+    app.add_flag("-f,--force_overwrite", overwrite, "Force overwrite of existing file");
     auto* sims = app.add_flag("-s,--similarity", similarity, "Calculate similarity, output filename is optional")
                                             ->take_last()
                                             ->expected(0,1);
@@ -1608,7 +1762,7 @@ int main(int argc, char *argv[])
 
     // Check if user choose to show version
     if(version){
-        printf("Similarity & Connectivity version 0.4.1\n");
+        printf("Similarity & Connectivity version 0.5.0\n");
         printf("DNATCO v5.0, NtC v" LLKA_INTERNAL_NTC_VERSION ", CANA v" LLKA_INTERNAL_CANA_VERSION "\n");
         return EXIT_SUCCESS;
     }
@@ -1718,26 +1872,90 @@ int main(int argc, char *argv[])
         outputCif = prefix + "_extended.cif";
     }
 
-    // Main logic
-    if(sims->count() > 0){
-        calculateSimilarity(steps, currNtCIn, idOfStep, cutOffRmsd, similarity);
-    }
-    if(cons->count() > 0){
-        calculateConnectivity(steps, currNtCIn, idOfStep, cutOffDis, connectivity, prevNtCCon, nextNtCCon);
-    }
-    if(ocif->count() > 0){
-        if(!fileExists(outputCif)){
-            extendCifData(importedStru.cifData, &classifiedSteps, &avgConfal, importedStru.entry.id, &steps, structureHasMultipleModels(&steps));
-            tRet = LLKA_cifDataToString(importedStru.cifData, LLKA_TRUE, &cifString);
-            if (tRet != LLKA_OK) {
-                fprintf(stderr, "Cannot write out CifData as Cif string: %s\n", LLKA_errorToString(tRet));
-                goto out;
-            } else {
-                createAndWriteCifFile(std::string(cifString), outputCif);
-                LLKA_destroyString(cifString);
+    // Exists output file?
+    // ==============================================
+    if(sims->count()>0){
+        if(fileExists(similarity)){
+            if(overwrite){
+                std::ofstream file(similarity, std::ios::trunc);
+                if(!file) {
+                  std::cerr << "Error opening file " << similarity << std::endl;
+                  file.close();
+                  return EXIT_FAILURE;
+                }
+                std::cout << "File \"" << similarity << "\" was successfully cleared." << std::endl;
+                file.close();
+            }else{
+                std::cerr << "File \"" << similarity << "\" already exists! Data not written, use -f to overwrite the file or choose different output file name." << std::endl;
+                return EXIT_SUCCESS;
             }
         }
+    }
 
+    if(cons->count()>0){
+        if(fileExists(connectivity)){
+            if(overwrite){
+                std::ofstream file(connectivity, std::ios::trunc);
+                if(!file) {
+                    std::cerr << "Error opening file " << connectivity << std::endl;
+                    file.close();
+                    return EXIT_FAILURE;
+                }
+                std::cout << "File \"" << connectivity << "\" was successfully cleared." << std::endl;
+                file.close();
+            }else{
+                std::cerr << "File \"" << connectivity << "\" already exists! Data not written, use -f to overwrite the file or choose different output file name." << std::endl;
+                return EXIT_SUCCESS;
+            }
+        }
+    }
+
+    if(ocif->count()>0){
+        if(fileExists(outputCif)){
+            if(overwrite){
+                std::ofstream file(outputCif, std::ios::trunc);
+                if(!file) {
+                    std::cerr << "Error opening file " << outputCif << std::endl;
+                    file.close();
+                    return EXIT_FAILURE;
+                }
+                std::cout << "File \"" << outputCif << "\" was successfully cleared." << std::endl;
+                file.close();
+            }else{
+                std::cerr << "File \"" << outputCif << "\" already exists! Data not written, use -f to overwrite the file or choose different output file name." << std::endl;
+                return EXIT_SUCCESS;
+            }
+        }
+    }
+    // ==============================================
+
+    sortSteps(steps, sortedSteps);
+
+    // Main logic
+    if(sims->count() > 0){
+        tRet = calculateSimilarity(steps, currNtCIn, idOfStep, cutOffRmsd, similarity);
+        if (tRet != LLKA_OK) {
+            fprintf(stderr, "Cannot calculate similarity: %s\n", LLKA_errorToString(tRet));
+            goto out;
+        }
+    }
+    if(cons->count() > 0){
+        tRet= calculateConnectivity(sortedSteps, currNtCIn, idOfStep, cutOffDis, connectivity, prevNtCCon, nextNtCCon);
+        if (tRet != LLKA_OK) {
+            fprintf(stderr, "Cannot calculate connectivity: %s\n", LLKA_errorToString(tRet));
+            goto out;
+        }
+    }
+    if(ocif->count() > 0){
+        extendCifData(importedStru.cifData, &classifiedSteps, &avgConfal, importedStru.entry.id, &steps, structureHasMultipleModels(&steps));
+        tRet = LLKA_cifDataToString(importedStru.cifData, LLKA_TRUE, &cifString);
+        if (tRet != LLKA_OK) {
+            fprintf(stderr, "Cannot write out CifData as Cif string: %s\n", LLKA_errorToString(tRet));
+            goto out;
+        } else {
+            createAndWriteCifFile(std::string(cifString), outputCif);
+            LLKA_destroyString(cifString);
+        }
     }
 
 out:
