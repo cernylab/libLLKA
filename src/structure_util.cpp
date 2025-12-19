@@ -52,12 +52,22 @@ auto dinucleotideToSteps(const LLKA_Structure &firstNucl, const LLKA_Structure &
     } else {
         steps.reserve(splittedFirst.size() * splittedSecond.size());
 
-        for (auto &sf : splittedFirst) {
+        for (size_t firstIdx = 0; firstIdx < splittedFirst.size(); firstIdx++) {
+            auto &sf = splittedFirst[firstIdx];
             auto atomO3 = getAtomByName(sf, "O3'");
             if (atomO3 == nullptr) [[ unlikely ]]
                 continue; // Weird nucleotide, just skip it
 
-            for (auto &ss : splittedSecond) {
+            for (size_t secondIdx = 0; secondIdx < splittedSecond.size(); secondIdx++) {
+                auto &ss = splittedSecond[secondIdx];
+
+                // Check alt-loc compatibility
+                // If both residues have alt-locs, only allow matching alt-loc IDs (e.g., A-A, B-B)
+                // If one residue has no alt-locs, allow all combinations with the other
+                const bool bothHaveAltLocs = !altIdsFirst.empty() && !altIdsSecond.empty();
+                if (bothHaveAltLocs && altIdsFirst[firstIdx] != altIdsSecond[secondIdx])
+                    continue; // Incompatible alt-locs (e.g., A with B)
+
                 auto atomP = getAtomByName(ss, "P");
 
                 if (atomP == nullptr) [[ unlikely ]]
