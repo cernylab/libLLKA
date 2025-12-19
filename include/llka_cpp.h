@@ -87,9 +87,9 @@ public:
         m_u.success.~S(); // Needed because m_u must be default-inited to something
 
         if (other.m_isSuccess)
-            this->m_u.success = other.m_u.success;
+            new (&this->m_u.success) S(other.m_u.success);
         else
-            this->m_u.failure = other.m_u.failure;
+            new (&this->m_u.failure) F(other.m_u.failure);
         this->m_isSuccess = other.m_isSuccess;
         this->m_movedAway = false;
     }
@@ -101,9 +101,9 @@ public:
         m_u.success.~S(); // Needed because m_u must be default-inited to something
 
         if (other.m_isSuccess)
-            this->m_u.success = std::move(other.m_u.success);
+            new (&this->m_u.success) S(std::move(other.m_u.success));
         else
-            this->m_u.failure = std::move(other.m_u.failure);
+            new (&this->m_u.failure) F(std::move(other.m_u.failure));
         this->m_isSuccess = other.m_isSuccess;
         this->m_movedAway = false;
 
@@ -122,26 +122,44 @@ public:
 
     Result & operator=(const Result &other)
     {
-        if (other.m_isSuccess)
-            this->m_u.success = other.m_u.success;
-        else
-            this->m_u.failure = other.m_u.failure;
-        this->m_isSuccess = other.m_isSuccess;
-        this->m_movedAway = false;
+        if (this != &other) {
+            // Destroy current object
+            if (m_isSuccess)
+                m_u.success.~S();
+            else
+                m_u.failure.~F();
+
+            // Construct new object
+            if (other.m_isSuccess)
+                new (&this->m_u.success) S(other.m_u.success);
+            else
+                new (&this->m_u.failure) F(other.m_u.failure);
+            this->m_isSuccess = other.m_isSuccess;
+            this->m_movedAway = false;
+        }
 
         return *this;
     }
 
     Result & operator=(Result &&other) noexcept
     {
-        if (other.m_isSuccess)
-            this->m_u.success = std::move(other.m_u.success);
-        else
-            this->m_u.failure = std::move(other.m_u.failure);
-        this->m_isSuccess = other.m_isSuccess;
-        this->m_movedAway = false;
+        if (this != &other) {
+            // Destroy current object
+            if (m_isSuccess)
+                m_u.success.~S();
+            else
+                m_u.failure.~F();
 
-        other.m_movedAway = true;
+            // Construct new object
+            if (other.m_isSuccess)
+                new (&this->m_u.success) S(std::move(other.m_u.success));
+            else
+                new (&this->m_u.failure) F(std::move(other.m_u.failure));
+            this->m_isSuccess = other.m_isSuccess;
+            this->m_movedAway = false;
+
+            other.m_movedAway = true;
+        }
 
         return *this;
     }
@@ -1259,7 +1277,7 @@ EMSCRIPTEN_BINDINGS(LLKA)
 
     emscripten::function("centroidPoints", emscripten::select_overload<LLKA_Point(const LLKA::Points&)>(&LLKA::centroid));
     emscripten::function("centroidStructure", emscripten::select_overload<LLKA_Point(const LLKA::Structure&)>(&LLKA::centroid));
-    emscripten::function("rmsd", emscripten::select_overload<LLKA::RCResult<double>(const LLKA::Points&, const LLKA::Points&)>(&LLKA::rmsd));
+    emscripten::function("rmsdPoints", emscripten::select_overload<LLKA::RCResult<double>(const LLKA::Points&, const LLKA::Points&)>(&LLKA::rmsd));
     emscripten::function("rmsd", emscripten::select_overload<LLKA::RCResult<double>(const LLKA::Structure&, const LLKA::Structure&)>(&LLKA::rmsd));
     emscripten::function("superposePoints", emscripten::select_overload<LLKA::RCResult<double>(LLKA::Points&, const LLKA::Points &)>(&LLKA::superpose));
     emscripten::function("superposeStructures", emscripten::select_overload<LLKA::RCResult<double>(LLKA::Structure &, const LLKA::Structure &)>(&LLKA::superpose));
@@ -1586,9 +1604,6 @@ EMSCRIPTEN_BINDINGS(LLKA)
     // MiniCif
     //
 
-    emscripten::function("makeStdVectorCifDataValue", &LLKA::makeStdVector<LLKA::CifData::Value>);
-    emscripten::function("makeStdVectorCifDataItem", &LLKA::makeStdVector<LLKA::CifData::Item>);
-    emscripten::function("makeStdVectorCifDataCategory", &LLKA::makeStdVector<LLKA::CifData::Category>);
     emscripten::function("makeStdVectorCifDataBlock", &LLKA::makeStdVector<LLKA::CifData::Block>);
 
     emscripten::enum_<LLKA_CifDataValueState>("CifDataValueState")
