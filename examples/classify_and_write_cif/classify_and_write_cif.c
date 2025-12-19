@@ -845,31 +845,31 @@ LLKA_ClassificationContext * initializeClassificationContext(void)
 
     tRet = LLKA_loadResourceFile(create_full_path(GOLDEN_STEPS_FILE), &goldenSteps);
     if (tRet != LLKA_OK) {
-        fprintf(stderr, "Failed to load golden steps: %s\n", LLKA_errorToString(tRet));
+        fprintf(stderr, "Failed to load golden steps: %s\nThe file is expected in cwd or you can set DNATCO_ASSETS_PATH shell variable.\n", LLKA_errorToString(tRet));
         exit(EXIT_FAILURE);
     }
 
     tRet = LLKA_loadResourceFile(create_full_path(CLUSTERS_FILE), &clusters);
     if (tRet != LLKA_OK) {
-        fprintf(stderr, "Failed to load clusters: %s\n", LLKA_errorToString(tRet));
+        fprintf(stderr, "Failed to load clusters: %s\nThe file is expected in cwd or you can set DNATCO_ASSETS_PATH shell variable.\n", LLKA_errorToString(tRet));
         exit(EXIT_FAILURE);
     }
 
     tRet = LLKA_loadResourceFile(create_full_path(CONFALS_FILE), &confals);
     if (tRet != LLKA_OK) {
-        fprintf(stderr, "Failed to load confals: %s\n", LLKA_errorToString(tRet));
+        fprintf(stderr, "Failed to load confals: %s\nThe file is expected in cwd or you can set DNATCO_ASSETS_PATH shell variable.\n", LLKA_errorToString(tRet));
         exit(EXIT_FAILURE);
     }
 
     tRet = LLKA_loadResourceFile(create_full_path(NU_ANGLES_FILE), &nuAngles);
     if (tRet != LLKA_OK) {
-        fprintf(stderr, "Failed to load average nu angles: %s\n", LLKA_errorToString(tRet));
+        fprintf(stderr, "Failed to load average nu angles: %s\nThe file is expected in cwd or you can set DNATCO_ASSETS_PATH shell variable.\n", LLKA_errorToString(tRet));
         exit(EXIT_FAILURE);
     }
 
     tRet = LLKA_loadResourceFile(create_full_path(CONFAL_PERCENTILES_FILE), &confalPercentiles);
     if (tRet != LLKA_OK) {
-        fprintf(stderr, "Failed to load confal percentiles: %s\n", LLKA_errorToString(tRet));
+        fprintf(stderr, "Failed to load confal percentiles: %s\nThe file is expected in cwd or you can set DNATCO_ASSETS_PATH shell variable.\n", LLKA_errorToString(tRet));
         exit(EXIT_FAILURE);
     }
 
