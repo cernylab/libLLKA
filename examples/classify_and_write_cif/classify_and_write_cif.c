@@ -176,6 +176,23 @@ void prepareExtenedCifCategories(
         LLKA_cifDataCategory_addItem(sugar, sugar_keywords[idx]);
 }
 
+/* Helper function to extract the alt_id for a residue by searching all atoms.
+ * This is necessary because some atoms in a residue may have alt_ids while others don't.
+ * For example, backbone atoms might have alt_id 'A' or 'B', while base atoms have '.'.
+ * We need to find the first atom with a non-null alt_id to correctly identify the conformation.
+ */
+static
+char getResidueAltId(const LLKA_Structure *stru, int32_t seqId)
+{
+    size_t idx;
+    for (idx = 0; idx < stru->nAtoms; idx++) {
+        const LLKA_Atom *atom = &stru->atoms[idx];
+        if (atom->label_seq_id == seqId && atom->label_alt_id != LLKA_NO_ALTID)
+            return atom->label_alt_id;
+    }
+    return LLKA_NO_ALTID;
+}
+
 static
 void extendCifData(LLKA_CifData *cifData, const LLKA_ClassifiedSteps *classifiedSteps, const LLKA_AverageConfal *avgConfal, const char *entryId, const LLKA_Structures *steps, int hasMultipleModels)
 {
@@ -219,7 +236,12 @@ void extendCifData(LLKA_CifData *cifData, const LLKA_ClassifiedSteps *classified
         const LLKA_Structure *struStep = &steps->strus[idx];
         const LLKA_Atom *firstAtom = &struStep->atoms[0];
         const LLKA_Atom *lastAtom = &struStep->atoms[struStep->nAtoms - 1];
+        char firstAltId, secondAltId;
         char *DNATCOStepName;
+
+        /* Extract alt_ids by searching all atoms in each residue */
+        firstAltId = getResidueAltId(struStep, firstAtom->label_seq_id);
+        secondAltId = getResidueAltId(struStep, lastAtom->label_seq_id);
 
         item = NdbStructStepSummary->firstItem;
 
@@ -322,12 +344,12 @@ void extendCifData(LLKA_CifData *cifData, const LLKA_ClassifiedSteps *classified
         LLKA_cifDataItem_addValue(item, &cifValue);
 
         item = LLKA_cifDataCategory_nextItem(item);
-        if (firstAtom->label_alt_id == LLKA_NO_ALTID) {
+        if (firstAltId == LLKA_NO_ALTID) {
             cifValue.state = LLKA_MINICIF_VALUE_NONE;
             LLKA_cifDataItem_addValue(item, &cifValue);
             cifValue.state = LLKA_MINICIF_VALUE_SET;
         } else {
-            snprintf(strbuf, 32, "%c", firstAtom->label_alt_id);
+            snprintf(strbuf, 32, "%c", firstAltId);
             cifValue.text = strbuf;
             LLKA_cifDataItem_addValue(item, &cifValue);
         }
@@ -350,12 +372,12 @@ void extendCifData(LLKA_CifData *cifData, const LLKA_ClassifiedSteps *classified
         LLKA_cifDataItem_addValue(item, &cifValue);
 
         item = LLKA_cifDataCategory_nextItem(item);
-        if (lastAtom->label_alt_id == LLKA_NO_ALTID) {
+        if (secondAltId == LLKA_NO_ALTID) {
             cifValue.state = LLKA_MINICIF_VALUE_NONE;
             LLKA_cifDataItem_addValue(item, &cifValue);
             cifValue.state = LLKA_MINICIF_VALUE_SET;
         } else {
-            snprintf(strbuf, 32, "%c", lastAtom->label_alt_id);
+            snprintf(strbuf, 32, "%c", secondAltId);
             cifValue.text = strbuf;
             LLKA_cifDataItem_addValue(item, &cifValue);
         }

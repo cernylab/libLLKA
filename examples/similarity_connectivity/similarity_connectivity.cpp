@@ -427,7 +427,11 @@ void extendCifData(LLKA_CifData *cifData, const LLKA_ClassifiedSteps *classified
         const LLKA_Structure *struStep = &steps->strus[idx];
         const LLKA_Atom *firstAtom = &struStep->atoms[0];
         const LLKA_Atom *lastAtom = &struStep->atoms[struStep->nAtoms - 1];
+        char firstAltId, secondAltId;
         char *DNATCOStepName;
+
+        /* Extract alt_ids by searching all atoms in each residue */
+        stepAltIds(struStep, &firstAltId, &secondAltId);
 
         item = NdbStructStepSummary->firstItem;
 
@@ -530,12 +534,12 @@ void extendCifData(LLKA_CifData *cifData, const LLKA_ClassifiedSteps *classified
         LLKA_cifDataItem_addValue(item, &cifValue);
 
         item = LLKA_cifDataCategory_nextItem(item);
-        if (firstAtom->label_alt_id == LLKA_NO_ALTID) {
+        if (firstAltId == LLKA_NO_ALTID) {
             cifValue.state = LLKA_MINICIF_VALUE_NONE;
             LLKA_cifDataItem_addValue(item, &cifValue);
             cifValue.state = LLKA_MINICIF_VALUE_SET;
         } else {
-            snprintf(strbuf, 32, "%c", firstAtom->label_alt_id);
+            snprintf(strbuf, 32, "%c", firstAltId);
             cifValue.text = strbuf;
             LLKA_cifDataItem_addValue(item, &cifValue);
         }
@@ -558,12 +562,12 @@ void extendCifData(LLKA_CifData *cifData, const LLKA_ClassifiedSteps *classified
         LLKA_cifDataItem_addValue(item, &cifValue);
 
         item = LLKA_cifDataCategory_nextItem(item);
-        if (lastAtom->label_alt_id == LLKA_NO_ALTID) {
+        if (secondAltId == LLKA_NO_ALTID) {
             cifValue.state = LLKA_MINICIF_VALUE_NONE;
             LLKA_cifDataItem_addValue(item, &cifValue);
             cifValue.state = LLKA_MINICIF_VALUE_SET;
         } else {
-            snprintf(strbuf, 32, "%c", lastAtom->label_alt_id);
+            snprintf(strbuf, 32, "%c", secondAltId);
             cifValue.text = strbuf;
             LLKA_cifDataItem_addValue(item, &cifValue);
         }
