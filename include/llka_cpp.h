@@ -1592,9 +1592,6 @@ EMSCRIPTEN_BINDINGS(LLKA)
     emscripten::function("makeStdVectorAtom", &LLKA::makeStdVector<LLKA::Atom>);
     emscripten::function("makeStdVectorAtomPtr", &LLKA::makeStdVector<LLKA::Atom *>);
     emscripten::function("makeStdVectorNtC", &LLKA::makeStdVector<LLKA_NtC>);
-    emscripten::function("makeStdVectorCifDataValue", &LLKA::makeStdVector<LLKA::CifData::Value>);
-    emscripten::function("makeStdVectorCifDataItem", &LLKA::makeStdVector<LLKA::CifData::Item>);
-    emscripten::function("makeStdVectorCifDataCategory", &LLKA::makeStdVector<LLKA::CifData::Category>);
     emscripten::function("makeStdVectorStructure", &LLKA::makeStdVector<LLKA::Atom>);
     emscripten::function("makeStdVectorStructures", &LLKA::makeStdVector<LLKA::Structure>);
     emscripten::function("makeStdVectorString", &LLKA::makeStdVector<std::string>);
@@ -1604,6 +1601,9 @@ EMSCRIPTEN_BINDINGS(LLKA)
     // MiniCif
     //
 
+    emscripten::function("makeStdVectorCifDataValue", &LLKA::makeStdVector<LLKA::CifData::Value>);
+    emscripten::function("makeStdVectorCifDataItem", &LLKA::makeStdVector<LLKA::CifData::Item>);
+    emscripten::function("makeStdVectorCifDataCategory", &LLKA::makeStdVector<LLKA::CifData::Category>);
     emscripten::function("makeStdVectorCifDataBlock", &LLKA::makeStdVector<LLKA::CifData::Block>);
 
     emscripten::enum_<LLKA_CifDataValueState>("CifDataValueState")
