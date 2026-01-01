@@ -122,44 +122,25 @@ public:
 
     Result & operator=(const Result &other)
     {
-        if (this != &other) {
-            // Destroy current object
-            if (m_isSuccess)
-                m_u.success.~S();
-            else
-                m_u.failure.~F();
-
-            // Construct new object
-            if (other.m_isSuccess)
-                new (&this->m_u.success) S(other.m_u.success);
-            else
-                new (&this->m_u.failure) F(other.m_u.failure);
-            this->m_isSuccess = other.m_isSuccess;
-            this->m_movedAway = false;
-        }
+        if (other.m_isSuccess)
+            this->m_u.success = other.m_u.success;
+        else
+            this->m_u.failure = other.m_u.failure;
+        this->m_isSuccess = other.m_isSuccess;
+        this->m_movedAway = false;
 
         return *this;
     }
 
     Result & operator=(Result &&other) noexcept
     {
-        if (this != &other) {
-            // Destroy current object
-            if (m_isSuccess)
-                m_u.success.~S();
-            else
-                m_u.failure.~F();
-
-            // Construct new object
-            if (other.m_isSuccess)
-                new (&this->m_u.success) S(std::move(other.m_u.success));
-            else
-                new (&this->m_u.failure) F(std::move(other.m_u.failure));
-            this->m_isSuccess = other.m_isSuccess;
-            this->m_movedAway = false;
-
-            other.m_movedAway = true;
-        }
+        if (other.m_isSuccess)
+            this->m_u.success = std::move(other.m_u.success);
+        else
+            this->m_u.failure = std::move(other.m_u.failure);
+        this->m_isSuccess = other.m_isSuccess;
+        other.m_movedAway = true;
+        this->m_movedAway = false;
 
         return *this;
     }
