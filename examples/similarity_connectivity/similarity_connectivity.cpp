@@ -86,11 +86,47 @@ typedef struct LLKA_AnalyzedSteps{
 } LLKA_AnalyzedSteps;
 
 char* create_full_path(const char *filename) {
-    const char *prefix_path = getenv("DNATCO_ASSETS_PATH");
-
     /* Allocate memory for the full path */
     static char full_path[FULL_PATH_SIZE];
+    FILE *test_file;
 
+    /* First, try the current working directory */
+    strncpy(full_path, filename, sizeof(full_path) - 1);
+    full_path[sizeof(full_path) - 1] = '\0'; /* Ensure null-termination */
+
+    test_file = fopen(full_path, "r");
+    if (test_file != NULL) {
+        fclose(test_file);
+        return full_path;
+    }
+
+    /* Second, try ${CCP4}/share/dnatco */
+    const char *ccp4_path = getenv("CCP4");
+    if (ccp4_path != NULL) {
+        size_t ccp4_length = strlen(ccp4_path);
+        size_t filename_length = strlen(filename);
+        const char *subdir = "/share/dnatco/";
+        size_t subdir_length = strlen(subdir);
+
+        /* Check if the combined length exceeds the buffer size */
+        if (ccp4_length + subdir_length + filename_length + 1 <= FULL_PATH_SIZE) {
+            /* Check if the last character of the CCP4 path is a slash */
+            if (ccp4_path[ccp4_length - 1] != '/' && ccp4_path[ccp4_length - 1] != '\\') {
+                snprintf(full_path, sizeof(full_path), "%s/share/dnatco/%s", ccp4_path, filename);
+            } else {
+                snprintf(full_path, sizeof(full_path), "%sshare/dnatco/%s", ccp4_path, filename);
+            }
+
+            test_file = fopen(full_path, "r");
+            if (test_file != NULL) {
+                fclose(test_file);
+                return full_path;
+            }
+        }
+    }
+
+    /* Third, try DNATCO_ASSETS_PATH */
+    const char *prefix_path = getenv("DNATCO_ASSETS_PATH");
     if (prefix_path != NULL) {
         /* Calculate the length of the prefix path and filename */
         size_t prefix_length = strlen(prefix_path);
@@ -109,11 +145,16 @@ char* create_full_path(const char *filename) {
             snprintf(full_path, sizeof(full_path), "%s%s", prefix_path, filename);
         }
 
-    } else {
-        strncpy(full_path, filename, sizeof(full_path) - 1);
-        full_path[sizeof(full_path) - 1] = '\0'; /* Ensure null-termination */
+        test_file = fopen(full_path, "r");
+        if (test_file != NULL) {
+            fclose(test_file);
+            return full_path;
+        }
     }
 
+    /* If file not found in any location, return the cwd path (will fail later with appropriate error) */
+    strncpy(full_path, filename, sizeof(full_path) - 1);
+    full_path[sizeof(full_path) - 1] = '\0';
     return full_path;
 }
 
@@ -1057,31 +1098,31 @@ LLKA_ClassificationContext * initializeClassificationContext(void)
 
     tRet = LLKA_loadResourceFile(create_full_path(GOLDEN_STEPS_FILE), &goldenSteps);
     if (tRet != LLKA_OK) {
-        fprintf(stderr, "Failed to load golden steps: %s\nThe file is expected in cwd or you can set DNATCO_ASSETS_PATH shell variable.\n", LLKA_errorToString(tRet));
+        fprintf(stderr, "Failed to load golden steps: %s\nThe file is expected in cwd, ${CCP4}/share/dnatco, or you can set DNATCO_ASSETS_PATH environment variable.\n", LLKA_errorToString(tRet));
         exit(EXIT_FAILURE);
     }
 
     tRet = LLKA_loadResourceFile(create_full_path(CLUSTERS_FILE), &clusters);
     if (tRet != LLKA_OK) {
-        fprintf(stderr, "Failed to load clusters: %s\nThe file is expected in cwd or you can set DNATCO_ASSETS_PATH shell variable.\n", LLKA_errorToString(tRet));
+        fprintf(stderr, "Failed to load clusters: %s\nThe file is expected in cwd, ${CCP4}/share/dnatco, or you can set DNATCO_ASSETS_PATH environment variable.\n", LLKA_errorToString(tRet));
         exit(EXIT_FAILURE);
     }
 
     tRet = LLKA_loadResourceFile(create_full_path(CONFALS_FILE), &confals);
     if (tRet != LLKA_OK) {
-        fprintf(stderr, "Failed to load confals: %s\nThe file is expected in cwd or you can set DNATCO_ASSETS_PATH shell variable.\n", LLKA_errorToString(tRet));
+        fprintf(stderr, "Failed to load confals: %s\nThe file is expected in cwd, ${CCP4}/share/dnatco, or you can set DNATCO_ASSETS_PATH environment variable.\n", LLKA_errorToString(tRet));
         exit(EXIT_FAILURE);
     }
 
     tRet = LLKA_loadResourceFile(create_full_path(NU_ANGLES_FILE), &nuAngles);
     if (tRet != LLKA_OK) {
-        fprintf(stderr, "Failed to load average nu angles: %s\nThe file is expected in cwd or you can set DNATCO_ASSETS_PATH shell variable.\n", LLKA_errorToString(tRet));
+        fprintf(stderr, "Failed to load average nu angles: %s\nThe file is expected in cwd, ${CCP4}/share/dnatco, or you can set DNATCO_ASSETS_PATH environment variable.\n", LLKA_errorToString(tRet));
         exit(EXIT_FAILURE);
     }
 
     tRet = LLKA_loadResourceFile(create_full_path(CONFAL_PERCENTILES_FILE), &confalPercentiles);
     if (tRet != LLKA_OK) {
-        fprintf(stderr, "Failed to load confal percentiles: %s\nThe file is expected in cwd or you can set DNATCO_ASSETS_PATH shell variable.\n", LLKA_errorToString(tRet));
+        fprintf(stderr, "Failed to load confal percentiles: %s\nThe file is expected in cwd, ${CCP4}/share/dnatco, or you can set DNATCO_ASSETS_PATH environment variable.\n", LLKA_errorToString(tRet));
         exit(EXIT_FAILURE);
     }
 
