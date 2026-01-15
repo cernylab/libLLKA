@@ -99,7 +99,13 @@
 
 /* Export only symbols that are part of the public API */
 #if defined LLKA_PLATFORM_WIN32
-    #if defined LLKA_DLL_BUILD && !defined(LLKA_IMPORT_INTERNAL)
+    #if defined LLKA_STATIC_BUILD
+        /* Building or using a static library - no decoration needed */
+        #define LLKA_API
+        #define LLKA_CPP_API
+        #define LLKA_INTERNAL_API
+    #elif defined LLKA_DLL_BUILD && !defined(LLKA_IMPORT_INTERNAL)
+        /* Building a DLL - export symbols */
         #if defined LLKA_COMPILER_MINGW || defined LLKA_COMPILER_MSYS
             #define LLKA_API __attribute__ ((dllexport))
             #define LLKA_CPP_API __attribute__ ((dllexport))
@@ -112,6 +118,7 @@
             #error "Unsupported or misdetected compiler"
         #endif /* LLKA_COMPILER_* */
     #else
+        /* Using a DLL - import symbols */
         #if defined LLKA_COMPILER_MINGW || defined LLKA_COMPILER_MSYS
             #define LLKA_API __attribute__ ((dllimport))
             #define LLKA_CPP_API __attribute__ ((dllimport))
@@ -123,7 +130,7 @@
         #else
             #error "Unsupported or misdetected compiler"
         #endif /* LLKA_COMPILER_* */
-    #endif /* LLKA_DLL_BUILD */
+    #endif /* LLKA_STATIC_BUILD / LLKA_DLL_BUILD */
 #elif defined(LLKA_PLATFORM_UNIX) || defined(LLKA_PLATFORM_EMSCRIPTEN)
     #ifdef LLKA_COMPILER_GCC_LIKE
         #if defined LLKA_DLL_BUILD && !defined(LLKA_IMPORT_INTERNAL)

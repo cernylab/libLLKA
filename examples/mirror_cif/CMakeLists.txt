@@ -1,7 +1,9 @@
 if (BUILD_STATIC_LIBRARY)
     set(LLKA_LIB_LINK libLLKA_STATIC)
+    set(LLKA_STATIC_DEFINE -DLLKA_STATIC_BUILD)
 else ()
     set(LLKA_LIB_LINK libLLKA_SHARED)
+    set(LLKA_STATIC_DEFINE "")
 endif ()
 
 # Simple NtC assignment example
@@ -14,7 +16,7 @@ set_target_properties(
     PROPERTIES
         LANGUAGE C
 )
-target_compile_definitions(mirror_cif PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS})
+target_compile_definitions(mirror_cif PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS} ${LLKA_STATIC_DEFINE})
 
 if (EMSCRIPTEN)
     set(MAYBE_EMX_LINK_FLAGS "-sALLOW_MEMORY_GROWTH -fexceptions")

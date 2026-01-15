@@ -1,7 +1,9 @@
 if (BUILD_STATIC_LIBRARY)
     set(LLKA_LIB_LINK libLLKA_STATIC)
+    set(LLKA_STATIC_DEFINE -DLLKA_STATIC_BUILD)
 else ()
     set(LLKA_LIB_LINK libLLKA_SHARED)
+    set(LLKA_STATIC_DEFINE "")
 endif ()
 
 find_package(Qt6 COMPONENTS Core Gui Widgets)
@@ -27,7 +29,7 @@ if (WIN32)
 else ()
     add_executable(gui_assigner ${gui_assigner_SRCS})
 endif ()
-target_compile_definitions(gui_assigner PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS})
+target_compile_definitions(gui_assigner PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS} ${LLKA_STATIC_DEFINE})
 target_link_libraries(
     gui_assigner
     PRIVATE ${LLKA_LIB_LINK}

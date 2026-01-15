@@ -14,6 +14,7 @@ set(BUILD_SHARED_LIBRARY OFF CACHE BOOL "Build shared library")
 set(USE_ADDRESS_SANITIZER OFF CACHE BOOL "Use AddressSanitizer (supported only with recent Clang and GCC)")
 set(BUILD_TESTING ON CACHE BOOL "Build tests")
 set(BUILD_EXAMPLES ON CACHE BOOL "Build examples")
+set(BUILD_PYTHON_BINDINGS OFF CACHE BOOL "Build Python bindings")
 if (EMSCRIPTEN)
     set(
         EMX_JS_BUILD_MODE
@@ -316,7 +317,7 @@ else ()
             PROPERTIES OUTPUT_NAME LLKA
             LINK_FLAGS ${DEFAULT_SYMVER_LINK}
         )
-        target_compile_definitions(libLLKA_STATIC PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_BUILD_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS})
+        target_compile_definitions(libLLKA_STATIC PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_BUILD_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS} -DLLKA_STATIC_BUILD)
         target_link_libraries(libLLKA_STATIC ${LLKA_EXTRA_LINK_LIBS})
 
         set(LLKA_TARGETS ${LLKA_TARGETS} libLLKA_STATIC)
@@ -391,6 +392,10 @@ endif ()
 
 if (BUILD_EXAMPLES)
     add_subdirectory("examples")
+endif ()
+
+if (BUILD_PYTHON_BINDINGS AND NOT EMSCRIPTEN)
+    add_subdirectory("python")
 endif ()
 
 if (WIN32)

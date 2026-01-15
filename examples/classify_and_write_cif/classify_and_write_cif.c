@@ -13,11 +13,16 @@
 
 ****************************************************************/
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include <llka_module.h>
 #include <llka_classification.h>
 #include <llka_minicif.h>
 #include <llka_nucleotide.h>
@@ -41,46 +46,70 @@
 
 #define FULL_PATH_SIZE 1024
 
-char* create_full_path(const char *filename) {
+LLKA_PathChar* create_full_path(const LLKA_PathChar *filename) {
     /* Allocate memory for the full path */
-    static char full_path[FULL_PATH_SIZE];
+    static LLKA_PathChar full_path[FULL_PATH_SIZE];
     FILE *test_file;
-    const char *ccp4_path;
-    const char *prefix_path;
+    const LLKA_PathChar *ccp4_path;
+    const LLKA_PathChar *prefix_path;
     size_t ccp4_length;
     size_t filename_length;
-    const char *subdir;
+    const LLKA_PathChar *subdir;
     size_t subdir_length;
     size_t prefix_length;
 
-    /* First, try the current working directory */
-    strncpy(full_path, filename, sizeof(full_path) - 1);
-    full_path[sizeof(full_path) - 1] = '\0'; /* Ensure null-termination */
+#ifdef LLKA_PLATFORM_WIN32
+    #define PATH_STRLEN wcslen
+    #define PATH_STRNCPY wcsncpy
+    #define PATH_SNPRINTF swprintf
+    #define PATH_FOPEN _wfopen
+    #define PATH_GETENV _wgetenv
+    #define PATH_TEXT(x) L##x
+#else
+    #define PATH_STRLEN strlen
+    #define PATH_STRNCPY strncpy
+    #define PATH_SNPRINTF snprintf
+    #define PATH_FOPEN fopen
+    #define PATH_GETENV getenv
+    #define PATH_TEXT(x) x
+#endif
 
-    test_file = fopen(full_path, "r");
+    /* First, try the current working directory */
+    PATH_STRNCPY(full_path, filename, FULL_PATH_SIZE - 1);
+    full_path[FULL_PATH_SIZE - 1] = PATH_TEXT('\0'); /* Ensure null-termination */
+
+    test_file = PATH_FOPEN(full_path, PATH_TEXT("r"));
     if (test_file != NULL) {
         fclose(test_file);
         return full_path;
     }
 
     /* Second, try ${CCP4}/share/dnatco */
-    ccp4_path = getenv("CCP4");
+    ccp4_path = PATH_GETENV(PATH_TEXT("CCP4"));
     if (ccp4_path != NULL) {
-        ccp4_length = strlen(ccp4_path);
-        filename_length = strlen(filename);
-        subdir = "/share/dnatco/";
-        subdir_length = strlen(subdir);
+        ccp4_length = PATH_STRLEN(ccp4_path);
+        filename_length = PATH_STRLEN(filename);
+        subdir = PATH_TEXT("/share/dnatco/");
+        subdir_length = PATH_STRLEN(subdir);
 
         /* Check if the combined length exceeds the buffer size */
         if (ccp4_length + subdir_length + filename_length + 1 <= FULL_PATH_SIZE) {
             /* Check if the last character of the CCP4 path is a slash */
-            if (ccp4_path[ccp4_length - 1] != '/' && ccp4_path[ccp4_length - 1] != '\\') {
-                snprintf(full_path, sizeof(full_path), "%s/share/dnatco/%s", ccp4_path, filename);
+            if (ccp4_path[ccp4_length - 1] != PATH_TEXT('/') && ccp4_path[ccp4_length - 1] != PATH_TEXT('\\')) {
+#ifdef LLKA_PLATFORM_WIN32
+                swprintf(full_path, FULL_PATH_SIZE, L"%s/share/dnatco/%s", ccp4_path, filename);
+#else
+                snprintf(full_path, FULL_PATH_SIZE, "%s/share/dnatco/%s", ccp4_path, filename);
+#endif
             } else {
-                snprintf(full_path, sizeof(full_path), "%sshare/dnatco/%s", ccp4_path, filename);
+#ifdef LLKA_PLATFORM_WIN32
+                swprintf(full_path, FULL_PATH_SIZE, L"%sshare/dnatco/%s", ccp4_path, filename);
+#else
+                snprintf(full_path, FULL_PATH_SIZE, "%sshare/dnatco/%s", ccp4_path, filename);
+#endif
             }
 
-            test_file = fopen(full_path, "r");
+            test_file = PATH_FOPEN(full_path, PATH_TEXT("r"));
             if (test_file != NULL) {
                 fclose(test_file);
                 return full_path;
@@ -89,11 +118,11 @@ char* create_full_path(const char *filename) {
     }
 
     /* Third, try DNATCO_ASSETS_PATH */
-    prefix_path = getenv("DNATCO_ASSETS_PATH");
+    prefix_path = PATH_GETENV(PATH_TEXT("DNATCO_ASSETS_PATH"));
     if (prefix_path != NULL) {
         /* Calculate the length of the prefix path and filename */
-        prefix_length = strlen(prefix_path);
-        filename_length = strlen(filename);
+        prefix_length = PATH_STRLEN(prefix_path);
+        filename_length = PATH_STRLEN(filename);
 
         /* Check if the combined length exceeds the buffer size */
         if (prefix_length + filename_length + 2 > FULL_PATH_SIZE) {
@@ -102,13 +131,21 @@ char* create_full_path(const char *filename) {
         }
 
         /* Check if the last character of the prefix path is a slash */
-        if (prefix_path[prefix_length - 1] != '/' && prefix_path[prefix_length - 1] != '\\') {
-            snprintf(full_path, sizeof(full_path), "%s/%s", prefix_path, filename);
+        if (prefix_path[prefix_length - 1] != PATH_TEXT('/') && prefix_path[prefix_length - 1] != PATH_TEXT('\\')) {
+#ifdef LLKA_PLATFORM_WIN32
+            swprintf(full_path, FULL_PATH_SIZE, L"%s/%s", prefix_path, filename);
+#else
+            snprintf(full_path, FULL_PATH_SIZE, "%s/%s", prefix_path, filename);
+#endif
         } else {
-            snprintf(full_path, sizeof(full_path), "%s%s", prefix_path, filename);
+#ifdef LLKA_PLATFORM_WIN32
+            swprintf(full_path, FULL_PATH_SIZE, L"%s%s", prefix_path, filename);
+#else
+            snprintf(full_path, FULL_PATH_SIZE, "%s%s", prefix_path, filename);
+#endif
         }
 
-        test_file = fopen(full_path, "r");
+        test_file = PATH_FOPEN(full_path, PATH_TEXT("r"));
         if (test_file != NULL) {
             fclose(test_file);
             return full_path;
@@ -116,8 +153,15 @@ char* create_full_path(const char *filename) {
     }
 
     /* If file not found in any location, return the cwd path (will fail later with appropriate error) */
-    strncpy(full_path, filename, sizeof(full_path) - 1);
-    full_path[sizeof(full_path) - 1] = '\0';
+    PATH_STRNCPY(full_path, filename, FULL_PATH_SIZE - 1);
+    full_path[FULL_PATH_SIZE - 1] = PATH_TEXT('\0');
+
+#undef PATH_STRLEN
+#undef PATH_STRNCPY
+#undef PATH_SNPRINTF
+#undef PATH_FOPEN
+#undef PATH_GETENV
+#undef PATH_TEXT
     return full_path;
 }
 
@@ -1023,7 +1067,11 @@ int main(int argc, char *argv[])
 
     /* Read structure from Cif and assign NtCs */
 
+#ifdef LLKA_PLATFORM_WIN32
+    if (argc > 1 && wcscmp(argv[1], L"--version") == 0) {
+#else
     if (argc > 1 && strcmp(argv[1], "--version") == 0) {
+#endif
         printf("classify_and_write_cif version 0.0.2\n");
         printf("DNATCO v5.0, NtC v" LLKA_INTERNAL_NTC_VERSION ", CANA v" LLKA_INTERNAL_CANA_VERSION "\n");
         return 0;
