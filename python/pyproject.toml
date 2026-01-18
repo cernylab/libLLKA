@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=64", "wheel", "pybind11>=2.11.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyllka"
+version = "0.1.0"
+description = "Python bindings for libLLKA - nucleic acid structure analysis library"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "libLLKA contributors"}
+]
+keywords = ["bioinformatics", "structural-biology", "nucleic-acids", "dna", "rna", "dnatco"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Topic :: Scientific/Engineering :: Chemistry",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: C++",
+]
+
+dependencies = [
+    "numpy>=1.20.0",
+]
+
+[project.optional-dependencies]
+mdanalysis = [
+    "MDAnalysis>=2.0.0",
+]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "MDAnalysis>=2.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/cernylab/libLLKA"
+Repository = "https://github.com/cernylab/libLLKA"
+
+[tool.setuptools]
+packages = ["pyllka"]
+package-dir = {"" = "."}
+
+[tool.setuptools.package-data]
+pyllka = ["assets/*.csv"]
