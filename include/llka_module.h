@@ -235,7 +235,9 @@
 #ifdef LLKA_HAVE_SAD_LADY_COMPILER
     #define LLKA_SAD_CONSTEXPR_FUNC
     #define LLKA_SAD_CONSTEXPR_VAR const
+    #define LLKA_SAD_CONSTINIT const
 #else
     #define LLKA_SAD_CONSTEXPR_FUNC constexpr
     #define LLKA_SAD_CONSTEXPR_VAR constexpr
+    #define LLKA_SAD_CONSTINIT constinit
 #endif /* LLKA_HAVE_SAD_LADY_COMPILER */
