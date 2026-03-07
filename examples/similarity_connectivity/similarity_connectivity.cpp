@@ -224,6 +224,31 @@ void stepAltIds(const LLKA_Structure *stru, char *altIdFirst, char *altIdSecond)
     }
 }
 
+#ifdef LLKA_PLATFORM_WIN32
+
+std::wstring inputToFilePath(const std::string &filePathIn)
+{
+    auto wlen = MultiByteToWideChar(CP_UTF8, 0, filePathIn.c_str(), -1, nullptr, 0);
+    if (wlen == 0) {
+        fprintf(stderr, "Cannot process input path to mmcif file, error %d", GetLastError());
+        abort();
+    }
+
+    std::vector<wchar_t> buf(wlen, '\0');
+    MultiByteToWideChar(CP_UTF8, 0, filePathIn.c_str(), -1, buf.data(), wlen);
+
+    return std::wstring(buf.data());
+}
+
+#else
+
+std::string inputToFilePath(std::string filePathIn)
+{
+    return filePathIn;
+}
+
+#endif // LLKA_PLATFORM_
+
 char * deriveDNATCOStepName(const char *entryId, int hasMultipleModels, const LLKA_Structure *step)
 {
     char altIdFirst, altIdSecond;
@@ -1830,19 +1855,15 @@ int main(int argc, char *argv[])
     }
 
     // Read structure from Cif File
-#ifdef LLKA_PLATFORM_WIN32
-    // Convert UTF-8 string to wide string on Windows
-    int wlen = MultiByteToWideChar(CP_UTF8, 0, filename.c_str(), -1, NULL, 0);
-    wchar_t *wfilename = new wchar_t[wlen];
-    MultiByteToWideChar(CP_UTF8, 0, filename.c_str(), -1, wfilename, wlen);
-    bool cifResult = makeStructureFromCif(wfilename, &importedStru);
-    delete[] wfilename;
-    if (!cifResult)
+    if(filename.size() == 0){
+        fprintf(stderr, "mmcif file path cannot be empty");
+        exit(1);
+    }
+
+    auto filepathInternal = inputToFilePath(filename);
+    if (!makeStructureFromCif(filepathInternal.c_str(), &importedStru))
         return EXIT_FAILURE;
-#else
-    if (!makeStructureFromCif(filename.c_str(), &importedStru))
-        return EXIT_FAILURE;
-#endif
+
 
     tRet = LLKA_splitStructureToDinucleotideSteps(&importedStru.structure, &steps);
     if (tRet != LLKA_OK) {
