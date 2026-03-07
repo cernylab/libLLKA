@@ -13,7 +13,7 @@
 #include <string.h>
 #include <assert.h>
 
-#include <llka_module.h>
+#include <llka_platform_helpers.h>
 
 #include <json.hpp>
 #include <CLI11.hpp>
@@ -90,63 +90,47 @@ typedef struct LLKA_AnalyzedSteps{
     size_t nSteps;
 } LLKA_AnalyzedSteps;
 
-LLKA_PathChar* create_full_path(const LLKA_PathChar *filename) {
+LLKA_PathChar* create_full_path(const LLKA_PathChar* filename) {
     /* Allocate memory for the full path */
     static LLKA_PathChar full_path[FULL_PATH_SIZE];
-    FILE *test_file;
-
-#ifdef LLKA_PLATFORM_WIN32
-    #define PATH_STRLEN wcslen
-    #define PATH_STRNCPY wcsncpy
-    #define PATH_SNPRINTF swprintf
-    #define PATH_FOPEN _wfopen
-    #define PATH_GETENV _wgetenv
-    #define PATH_TEXT(x) L##x
-#else
-    #define PATH_STRLEN strlen
-    #define PATH_STRNCPY strncpy
-    #define PATH_SNPRINTF snprintf
-    #define PATH_FOPEN fopen
-    #define PATH_GETENV getenv
-    #define PATH_TEXT(x) x
-#endif
+    FILE* test_file;
+    const LLKA_PathChar* ccp4_path;
+    const LLKA_PathChar* prefix_path;
+    size_t ccp4_length;
+    size_t filename_length;
+    const LLKA_PathChar* subdir;
+    size_t subdir_length;
+    size_t prefix_length;
 
     /* First, try the current working directory */
-    PATH_STRNCPY(full_path, filename, FULL_PATH_SIZE - 1);
-    full_path[FULL_PATH_SIZE - 1] = PATH_TEXT('\0'); /* Ensure null-termination */
+    LLKA_PHLP_STRNCPY(full_path, filename, FULL_PATH_SIZE - 1);
+    full_path[FULL_PATH_SIZE - 1] = LLKA_PathLiteral('\0'); /* Ensure null-termination */
 
-    test_file = PATH_FOPEN(full_path, PATH_TEXT("r"));
+    test_file = LLKA_PHLP_FOPEN(full_path, "r");
     if (test_file != NULL) {
         fclose(test_file);
         return full_path;
     }
 
     /* Second, try ${CCP4}/share/dnatco */
-    const LLKA_PathChar *ccp4_path = PATH_GETENV(PATH_TEXT("CCP4"));
+    ccp4_path = LLKA_PHLP_GETENV("CCP4");
     if (ccp4_path != NULL) {
-        size_t ccp4_length = PATH_STRLEN(ccp4_path);
-        size_t filename_length = PATH_STRLEN(filename);
-        const LLKA_PathChar *subdir = PATH_TEXT("/share/dnatco/");
-        size_t subdir_length = PATH_STRLEN(subdir);
+        ccp4_length = LLKA_PHLP_STRLEN(ccp4_path);
+        filename_length = LLKA_PHLP_STRLEN(filename);
+        subdir = LLKA_PathLiteral("/share/dnatco/");
+        subdir_length = LLKA_PHLP_STRLEN(subdir);
 
         /* Check if the combined length exceeds the buffer size */
         if (ccp4_length + subdir_length + filename_length + 1 <= FULL_PATH_SIZE) {
             /* Check if the last character of the CCP4 path is a slash */
-            if (ccp4_path[ccp4_length - 1] != PATH_TEXT('/') && ccp4_path[ccp4_length - 1] != PATH_TEXT('\\')) {
-#ifdef LLKA_PLATFORM_WIN32
-                swprintf(full_path, FULL_PATH_SIZE, L"%s/share/dnatco/%s", ccp4_path, filename);
-#else
-                snprintf(full_path, FULL_PATH_SIZE, "%s/share/dnatco/%s", ccp4_path, filename);
-#endif
-            } else {
-#ifdef LLKA_PLATFORM_WIN32
-                swprintf(full_path, FULL_PATH_SIZE, L"%sshare/dnatco/%s", ccp4_path, filename);
-#else
-                snprintf(full_path, FULL_PATH_SIZE, "%sshare/dnatco/%s", ccp4_path, filename);
-#endif
+            if (ccp4_path[ccp4_length - 1] != LLKA_PathLiteral('/') && ccp4_path[ccp4_length - 1] != LLKA_PathLiteral('\\')) {
+                LLKA_PHLP_SNPRINTF(full_path, FULL_PATH_SIZE, LLKA_PathLiteral("%s/share/dnatco/%s"), ccp4_path, filename);
+            }
+            else {
+                LLKA_PHLP_SNPRINTF(full_path, FULL_PATH_SIZE, LLKA_PathLiteral("%s/share/dnatco/%s"), ccp4_path, filename);
             }
 
-            test_file = PATH_FOPEN(full_path, PATH_TEXT("r"));
+            test_file = LLKA_PHLP_FOPEN(full_path, "r");
             if (test_file != NULL) {
                 fclose(test_file);
                 return full_path;
@@ -155,11 +139,11 @@ LLKA_PathChar* create_full_path(const LLKA_PathChar *filename) {
     }
 
     /* Third, try DNATCO_ASSETS_PATH */
-    const LLKA_PathChar *prefix_path = PATH_GETENV(PATH_TEXT("DNATCO_ASSETS_PATH"));
+    prefix_path = LLKA_PHLP_GETENV("DNATCO_ASSETS_PATH");
     if (prefix_path != NULL) {
         /* Calculate the length of the prefix path and filename */
-        size_t prefix_length = PATH_STRLEN(prefix_path);
-        size_t filename_length = PATH_STRLEN(filename);
+        prefix_length = LLKA_PHLP_STRLEN(prefix_path);
+        filename_length = LLKA_PHLP_STRLEN(filename);
 
         /* Check if the combined length exceeds the buffer size */
         if (prefix_length + filename_length + 2 > FULL_PATH_SIZE) {
@@ -168,21 +152,14 @@ LLKA_PathChar* create_full_path(const LLKA_PathChar *filename) {
         }
 
         /* Check if the last character of the prefix path is a slash */
-        if (prefix_path[prefix_length - 1] != PATH_TEXT('/') && prefix_path[prefix_length - 1] != PATH_TEXT('\\')) {
-#ifdef LLKA_PLATFORM_WIN32
-            swprintf(full_path, FULL_PATH_SIZE, L"%s/%s", prefix_path, filename);
-#else
-            snprintf(full_path, FULL_PATH_SIZE, "%s/%s", prefix_path, filename);
-#endif
-        } else {
-#ifdef LLKA_PLATFORM_WIN32
-            swprintf(full_path, FULL_PATH_SIZE, L"%s%s", prefix_path, filename);
-#else
-            snprintf(full_path, FULL_PATH_SIZE, "%s%s", prefix_path, filename);
-#endif
+        if (prefix_path[prefix_length - 1] != LLKA_PathLiteral('/') && prefix_path[prefix_length - 1] != LLKA_PathLiteral('\\')) {
+            LLKA_PHLP_SNPRINTF(full_path, FULL_PATH_SIZE, LLKA_PathLiteral("%s/%s"), prefix_path, filename);
+        }
+        else {
+            LLKA_PHLP_SNPRINTF(full_path, FULL_PATH_SIZE, LLKA_PathLiteral("%s/%s"), prefix_path, filename);
         }
 
-        test_file = PATH_FOPEN(full_path, PATH_TEXT("r"));
+        test_file = LLKA_PHLP_FOPEN(full_path, "r");
         if (test_file != NULL) {
             fclose(test_file);
             return full_path;
@@ -190,16 +167,10 @@ LLKA_PathChar* create_full_path(const LLKA_PathChar *filename) {
     }
 
     /* If file not found in any location, return the cwd path (will fail later with appropriate error) */
-    PATH_STRNCPY(full_path, filename, FULL_PATH_SIZE - 1);
-    full_path[FULL_PATH_SIZE - 1] = PATH_TEXT('\0');
-    return full_path;
+    LLKA_PHLP_STRNCPY(full_path, filename, FULL_PATH_SIZE - 1);
+    full_path[FULL_PATH_SIZE - 1] = LLKA_PathLiteral('\0');
 
-#undef PATH_STRLEN
-#undef PATH_STRNCPY
-#undef PATH_SNPRINTF
-#undef PATH_FOPEN
-#undef PATH_GETENV
-#undef PATH_TEXT
+    return full_path;
 }
 
 /* DNATCO step name functions signatures */
