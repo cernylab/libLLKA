@@ -1,9 +1,7 @@
 if (BUILD_STATIC_LIBRARY)
     set(LLKA_LIB_LINK libLLKA_STATIC)
-    set(LLKA_STATIC_DEFINE -DLLKA_STATIC_BUILD)
 else ()
     set(LLKA_LIB_LINK libLLKA_SHARED)
-    set(LLKA_STATIC_DEFINE "")
 endif ()
 
 set(CPP_EXTRA_LINK "")
@@ -12,63 +10,63 @@ if (EMSCRIPTEN)
 endif ()
 
 add_executable(test_basics test_basics.cpp effedup.cpp)
-target_compile_definitions(test_basics PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS} ${LLKA_STATIC_DEFINE})
+target_compile_definitions(test_basics PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS})
 target_link_libraries(test_basics ${LLKA_LIB_LINK})
 add_test(NAME Basics COMMAND test_basics)
 
 add_executable(test_structure_manipulation test_structure_manipulation.cpp effedup.cpp)
-target_compile_definitions(test_structure_manipulation PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS} ${LLKA_STATIC_DEFINE})
+target_compile_definitions(test_structure_manipulation PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS})
 target_link_libraries(test_structure_manipulation ${LLKA_LIB_LINK})
 add_test(NAME StructureManipulation COMMAND test_structure_manipulation)
 
 add_executable(test_structure_splitting test_structure_splitting.cpp effedup.cpp)
-target_compile_definitions(test_structure_splitting PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS} ${LLKA_STATIC_DEFINE})
+target_compile_definitions(test_structure_splitting PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS})
 target_link_libraries(test_structure_splitting PRIVATE ${LLKA_LIB_LINK})
 add_test(NAME StructureSplitting COMMAND test_structure_splitting)
 
 add_executable(test_segmentation test_segmentation.cpp effedup.cpp)
-target_compile_definitions(test_segmentation PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS} ${LLKA_STATIC_DEFINE})
+target_compile_definitions(test_segmentation PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS})
 target_link_libraries(test_segmentation PRIVATE ${LLKA_LIB_LINK})
 add_test(NAME Segmentation COMMAND test_segmentation)
 
 add_executable(test_extract_backbone test_extract_backbone.cpp effedup.cpp)
-target_compile_definitions(test_extract_backbone PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS} ${LLKA_STATIC_DEFINE})
+target_compile_definitions(test_extract_backbone PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS})
 target_link_libraries(test_extract_backbone ${LLKA_LIB_LINK})
 add_test(NAME ExtractBackbone COMMAND test_extract_backbone)
 
 add_executable(test_nucleotide test_nucleotide.cpp effedup.cpp)
-target_compile_definitions(test_nucleotide PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS} ${LLKA_STATIC_DEFINE})
+target_compile_definitions(test_nucleotide PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS})
 target_link_libraries(test_nucleotide ${LLKA_LIB_LINK})
 add_test(NAME Nucleotide COMMAND test_nucleotide)
 
 add_executable(test_ntc test_ntc.cpp effedup.cpp)
-target_compile_definitions(test_ntc PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS} ${LLKA_STATIC_DEFINE})
+target_compile_definitions(test_ntc PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS})
 target_link_libraries(test_ntc ${LLKA_LIB_LINK})
 add_test(NAME NtC COMMAND test_ntc)
 
 add_executable(test_superposition test_superposition.cpp effedup.cpp)
-target_compile_definitions(test_superposition PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS} ${LLKA_STATIC_DEFINE})
+target_compile_definitions(test_superposition PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS})
 target_link_libraries(test_superposition ${LLKA_LIB_LINK})
 add_test(NAME Superposition COMMAND test_superposition)
 
 add_executable(test_connectivity test_connectivity.cpp effedup.cpp)
-target_compile_definitions(test_connectivity PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS} ${LLKA_STATIC_DEFINE})
+target_compile_definitions(test_connectivity PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS})
 target_link_libraries(test_connectivity ${LLKA_LIB_LINK})
 add_test(NAME Connectivity COMMAND test_connectivity)
 
 add_executable(test_similarity test_similarity.cpp effedup.cpp)
-target_compile_definitions(test_similarity PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS} ${LLKA_STATIC_DEFINE})
+target_compile_definitions(test_similarity PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS})
 target_link_libraries(test_similarity ${LLKA_LIB_LINK})
 add_test(NAME Similarity COMMAND test_similarity)
 
 add_executable(test_measurements test_measurements.cpp effedup.cpp)
-target_compile_definitions(test_measurements PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS} ${LLKA_STATIC_DEFINE})
+target_compile_definitions(test_measurements PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS})
 target_link_libraries(test_measurements ${LLKA_LIB_LINK})
 add_test(NAME Measurements COMMAND test_measurements)
 
 if ((NOT EMSCRIPTEN) OR (EMX_JS_BUILD_MODE STREQUAL "Node") OR (EMX_JS_BUILD_MODE STREQUAL "Node_SIMD"))
     add_executable(test_classification test_classification.cpp effedup.cpp)
-    target_compile_definitions(test_classification PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS} ${LLKA_STATIC_DEFINE})
+    target_compile_definitions(test_classification PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS})
     target_link_libraries(test_classification ${LLKA_LIB_LINK})
     add_test(NAME Classification COMMAND test_classification)
     # Get definition files necessary to initialize classification context
@@ -105,7 +103,7 @@ if ((NOT EMSCRIPTEN) OR (EMX_JS_BUILD_MODE STREQUAL "Node") OR (EMX_JS_BUILD_MOD
 
 
     add_executable(test_minicif test_minicif.cpp effedup.cpp)
-    target_compile_definitions(test_minicif PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS} ${LLKA_STATIC_DEFINE})
+    target_compile_definitions(test_minicif PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS})
     # Make sure that the test does not run out of memory when ran with Node.js
     if (EMSCRIPTEN)
         set_target_properties(
@@ -146,12 +144,12 @@ if ((NOT EMSCRIPTEN) OR (EMX_JS_BUILD_MODE STREQUAL "Node") OR (EMX_JS_BUILD_MOD
 endif ()
 
 add_executable(test_cpp_interface test_cpp_interface.cpp effedup.cpp)
-target_compile_definitions(test_cpp_interface PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS} ${LLKA_STATIC_DEFINE})
+target_compile_definitions(test_cpp_interface PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS})
 target_link_libraries(test_cpp_interface ${LLKA_LIB_LINK} ${CPP_EXTRA_LINK})
 add_test(NAME CppInterface COMMAND test_cpp_interface)
 
 add_executable(test_cpp_interface_2 test_cpp_interface_2.cpp effedup.cpp)
-target_compile_definitions(test_cpp_interface_2 PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS} ${LLKA_STATIC_DEFINE})
+target_compile_definitions(test_cpp_interface_2 PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS})
 add_test(NAME CppInterface2 COMMAND test_cpp_interface_2)
 if (EMSCRIPTEN)
     set_target_properties(
@@ -165,6 +163,6 @@ else ()
 endif ()
 
 add_executable(test_cpp_interface_3 test_cpp_interface_3.cpp effedup.cpp)
-target_compile_definitions(test_cpp_interface_3 PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS} ${LLKA_STATIC_DEFINE})
+target_compile_definitions(test_cpp_interface_3 PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS})
 add_test(NAME CppInterface3 COMMAND test_cpp_interface_3)
 target_link_libraries(test_cpp_interface_3 PRIVATE ${LLKA_LIB_LINK} ${CPP_EXTRA_LINK})

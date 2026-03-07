@@ -1,9 +1,7 @@
 if (BUILD_STATIC_LIBRARY)
     set(LLKA_LIB_LINK libLLKA_STATIC)
-    set(LLKA_STATIC_DEFINE -DLLKA_STATIC_BUILD)
 else ()
     set(LLKA_LIB_LINK libLLKA_SHARED)
-    set(LLKA_STATIC_DEFINE "")
 endif ()
 
 # Simple NtC assignment example
@@ -11,7 +9,7 @@ add_executable(
     similarity_connectivity
     similarity_connectivity.cpp
 )
-target_compile_definitions(similarity_connectivity PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS} ${LLKA_STATIC_DEFINE})
+target_compile_definitions(similarity_connectivity PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS})
 
 if (EMSCRIPTEN)
     set(MAYBE_EMX_LINK_FLAGS "-sALLOW_MEMORY_GROWTH -fexceptions")
