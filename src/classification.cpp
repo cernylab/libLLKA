@@ -61,19 +61,19 @@ namespace LLKAInternal {
 inline constinit double MINIMUM_ALLOWED_DELTA = D2R(55.0);
 inline constinit double MAXIMUM_ALLOWED_DELTA = D2R(185.0);
 
-inline constinit std::array<double LLKA_StepMetrics::*, 9> ALL_TORSIONS_STEP_METRIC_CLSPTRS{
+inline LLKA_SAD_CONSTINIT std::array<double LLKA_StepMetrics::*, 9> ALL_TORSIONS_STEP_METRIC_CLSPTRS{
     &LLKA_StepMetrics::delta_1, &LLKA_StepMetrics::epsilon_1, &LLKA_StepMetrics::zeta_1, &LLKA_StepMetrics::alpha_2, &LLKA_StepMetrics::beta_2,
     &LLKA_StepMetrics::gamma_2, &LLKA_StepMetrics::delta_2, &LLKA_StepMetrics::chi_1, &LLKA_StepMetrics::chi_2
 };
-inline constinit std::array<LLKA_ClassificationMetric LLKA_ClassificationCluster::*, 9> ALL_TORSIONS_CLASSIFICATION_METRIC_CLSPTRS{
+inline LLKA_SAD_CONSTINIT std::array<LLKA_ClassificationMetric LLKA_ClassificationCluster::*, 9> ALL_TORSIONS_CLASSIFICATION_METRIC_CLSPTRS{
     &LLKA_ClassificationCluster::delta_1, &LLKA_ClassificationCluster::epsilon_1, &LLKA_ClassificationCluster::zeta_1, &LLKA_ClassificationCluster::alpha_2, &LLKA_ClassificationCluster::beta_2,
     &LLKA_ClassificationCluster::gamma_2, &LLKA_ClassificationCluster::delta_2, &LLKA_ClassificationCluster::chi_1, &LLKA_ClassificationCluster::chi_2
 };
-inline constinit std::array<double LLKA_Confal::*, 9> ALL_TORSIONS_CONFAL_CLSPTRS{
+inline LLKA_SAD_CONSTINIT std::array<double LLKA_Confal::*, 9> ALL_TORSIONS_CONFAL_CLSPTRS{
     &LLKA_Confal::delta_1, &LLKA_Confal::epsilon_1, &LLKA_Confal::zeta_1, &LLKA_Confal::alpha_2, &LLKA_Confal::beta_2,
     &LLKA_Confal::gamma_2, &LLKA_Confal::delta_2, &LLKA_Confal::chi_1, &LLKA_Confal::chi_2
 };
-inline constinit std::array<double LLKA_ConfalScore::*, 9> ALL_TORSIONS_CONFAL_SCORE_CLSPTRS{
+inline LLKA_SAD_CONSTINIT std::array<double LLKA_ConfalScore::*, 9> ALL_TORSIONS_CONFAL_SCORE_CLSPTRS{
     &LLKA_ConfalScore::delta_1, &LLKA_ConfalScore::epsilon_1, &LLKA_ConfalScore::zeta_1, &LLKA_ConfalScore::alpha_2, &LLKA_ConfalScore::beta_2,
     &LLKA_ConfalScore::gamma_2, &LLKA_ConfalScore::delta_2, &LLKA_ConfalScore::chi_1, &LLKA_ConfalScore::chi_2
 };
@@ -81,22 +81,22 @@ static_assert(ALL_TORSIONS_STEP_METRIC_CLSPTRS.size() == ALL_TORSIONS_CLASSIFICA
 static_assert(ALL_TORSIONS_STEP_METRIC_CLSPTRS.size() == ALL_TORSIONS_CONFAL_CLSPTRS.size());
 static_assert(ALL_TORSIONS_STEP_METRIC_CLSPTRS.size() == ALL_TORSIONS_CONFAL_SCORE_CLSPTRS.size());
 
-inline constinit std::array<double LLKA_StepMetrics::*, 10> TORSION_STEP_METRIC_CLSPTRS{
+inline LLKA_SAD_CONSTINIT std::array<double LLKA_StepMetrics::*, 10> TORSION_STEP_METRIC_CLSPTRS{
     &LLKA_StepMetrics::delta_1, &LLKA_StepMetrics::epsilon_1, &LLKA_StepMetrics::zeta_1, &LLKA_StepMetrics::alpha_2, &LLKA_StepMetrics::beta_2,
     &LLKA_StepMetrics::gamma_2, &LLKA_StepMetrics::delta_2, &LLKA_StepMetrics::chi_1, &LLKA_StepMetrics::chi_2,
     &LLKA_StepMetrics::mu
 };
-inline constinit std::array<LLKA_ClassificationMetric LLKA_ClassificationCluster::*, 10> TORSION_CLASSIFICATION_METRIC_CLSPTRS{
+inline LLKA_SAD_CONSTINIT std::array<LLKA_ClassificationMetric LLKA_ClassificationCluster::*, 10> TORSION_CLASSIFICATION_METRIC_CLSPTRS{
     &LLKA_ClassificationCluster::delta_1, &LLKA_ClassificationCluster::epsilon_1, &LLKA_ClassificationCluster::zeta_1, &LLKA_ClassificationCluster::alpha_2, &LLKA_ClassificationCluster::beta_2,
     &LLKA_ClassificationCluster::gamma_2, &LLKA_ClassificationCluster::delta_2, &LLKA_ClassificationCluster::chi_1, &LLKA_ClassificationCluster::chi_2,
     &LLKA_ClassificationCluster::mu
 };
 static_assert(TORSION_STEP_METRIC_CLSPTRS.size() == TORSION_CLASSIFICATION_METRIC_CLSPTRS.size());
 
-inline constinit std::array<LLKA_ClassificationMetric LLKA_NuAnglesMetrics::*, 5> NU_ANGLES_METRICS_CLSPTRS{
+inline LLKA_SAD_CONSTINIT std::array<LLKA_ClassificationMetric LLKA_NuAnglesMetrics::*, 5> NU_ANGLES_METRICS_CLSPTRS{
     &LLKA_NuAnglesMetrics::nu_0, &LLKA_NuAnglesMetrics::nu_1, &LLKA_NuAnglesMetrics::nu_2, &LLKA_NuAnglesMetrics::nu_3, &LLKA_NuAnglesMetrics::nu_4
 };
-inline constinit std::array<double LLKA_NuAngles::*, 5> NU_ANGLES_CLSPTRS{
+inline LLKA_SAD_CONSTINIT std::array<double LLKA_NuAngles::*, 5> NU_ANGLES_CLSPTRS{
     &LLKA_NuAngles::nu_0, &LLKA_NuAngles::nu_1, &LLKA_NuAngles::nu_2, &LLKA_NuAngles::nu_3, &LLKA_NuAngles::nu_4
 };
 static_assert(NU_ANGLES_METRICS_CLSPTRS.size() == NU_ANGLES_CLSPTRS.size());

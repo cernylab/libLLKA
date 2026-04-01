@@ -43,9 +43,23 @@ else ()
     )
 endif ()
 
+if (BUILD_STATIC_LIBRARY AND BUILD_SHARED_LIBRARY)
+    message(
+        FATAL_ERROR
+        "It is not allowed to build both Shared and Static variant of the library simultaneously.
+Create separate build configurations if you need to build both variants of this library."
+    )
+endif()
+
 set(LIBLLKA_GLOBAL_DEFINITIONS -D_USE_MATH_DEFINES)
-set(LIBLLKA_BUILD_DEFINITIONS -DLLKA_DLL_BUILD)
 set(LIBLLKA_PLATFORM_DEFINITIONS "")
+
+if (BUILD_SHARED_LIBRARY)
+    set("LLKA_DLL_BUILD" "1")
+endif()
+if (BUILD_STATIC_LIBRARY)
+    set("LLKA_STATIC_BUILD" "1")
+endif()
 
 if (EMSCRIPTEN)
     set(BUILD_STATIC_LIBRARY ON)
@@ -299,7 +313,7 @@ if (EMSCRIPTEN)
             OUTPUT_NAME ${TARGET_OUTPUT_NAME}
             LINK_OPTIONS "--bind -fexceptions -sNO_DISABLE_EXCEPTION_CATCHING -sNODERAWFS=${EMX_EMCC_NODERAWFS} -sENVIRONMENT=${EMX_EMCC_ENV} -sWASM=${EMX_EMCC_WASM} -sALLOW_MEMORY_GROWTH -sMODULARIZE=${EMX_EMCC_MODULARIZE} -sEXPORT_ES6=${EMX_EMCC_ES6} ${EMX_OPTIFLAGS} ${EMX_OPTIFLAGS_LTO}"
     )
-    target_compile_definitions(libLLKA_STATIC PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_BUILD_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS})
+    target_compile_definitions(libLLKA_STATIC PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS})
     target_link_libraries(libLLKA_STATIC ${LLKA_EXTRA_LINK_LIBS})
 
     set(LLKA_TARGETS ${LLKA_TARGETS} libLLKA_STATIC)
@@ -317,7 +331,7 @@ else ()
             PROPERTIES OUTPUT_NAME LLKA
             LINK_FLAGS ${DEFAULT_SYMVER_LINK}
         )
-        target_compile_definitions(libLLKA_STATIC PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_BUILD_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS} -DLLKA_STATIC_BUILD)
+        target_compile_definitions(libLLKA_STATIC PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS})
         target_link_libraries(libLLKA_STATIC ${LLKA_EXTRA_LINK_LIBS})
 
         set(LLKA_TARGETS ${LLKA_TARGETS} libLLKA_STATIC)
@@ -332,7 +346,7 @@ else ()
                        OUTPUT_NAME LLKA
                        LINK_FLAGS ${DEFAULT_SYMVER_LINK}
         )
-        target_compile_definitions(libLLKA_SHARED PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_BUILD_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS})
+        target_compile_definitions(libLLKA_SHARED PRIVATE ${LIBLLKA_GLOBAL_DEFINITIONS} ${LIBLLKA_PLATFORM_DEFINITIONS})
         target_link_libraries(libLLKA_SHARED ${LLKA_EXTRA_LINK_LIBS})
 
         set(LLKA_TARGETS ${LLKA_TARGETS} libLLKA_SHARED)

@@ -50,7 +50,11 @@ void mirror(const LLKA_CifData *data)
     }
 }
 
-int main(int argc, char *argv[])
+#ifdef LLKA_PLATFORM_WIN32
+int wmain(int argc, wchar_t* argv[])
+#else
+int main(int argc, char* argv[])
+#endif /* LLKA_PLATFORM_ */
 {
     LLKA_CifData *data;
     LLKA_RetCode tRet;

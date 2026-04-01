@@ -5,4 +5,7 @@
 #cmakedefine LLKA_PLATFORM_UNIX
 #cmakedefine LLKA_PLATFORM_EMSCRIPTEN
 
+#cmakedefine LLKA_STATIC_BUILD
+#cmakedefine LLKA_DLL_BUILD
+
 #endif /* _LLKA_CONFIG_H */
