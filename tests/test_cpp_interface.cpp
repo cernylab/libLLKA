@@ -280,6 +280,52 @@ auto superposition_testStructure()
 }
 
 static
+auto superposition_testStructureWithExplicitMatrix()
+{
+    LLKA::Structure ref_AB01 = LLKA::makeStructure(REF_AB01_ATOMS, REF_AB01_ATOMS_LEN);
+    LLKA::Structure real_AB01 = LLKA::makeStructure(REAL_1BNA_A_3_4_ATOMS, REAL_1BNA_A_3_4_ATOMS_LEN);
+
+    auto tRet = LLKA::extractBackbone(ref_AB01);
+    EFF_expect(tRet.isSuccess(), true, "LLKA_extractBackbone() returned unexpected value " + LLKA::errorToString(tRet.failure()))
+    auto ref_AB01_bkbn = tRet.success();
+
+    tRet = LLKA::extractBackbone(real_AB01);
+    EFF_expect(tRet.isSuccess(), true, "LLKA_extractBackbone() returned unexpected value " + LLKA::errorToString(tRet.failure()));
+    auto real_AB01_bkbn = tRet.success();
+
+    auto tRet2 = LLKA::superpositionMatrix(real_AB01_bkbn, ref_AB01_bkbn);
+    EFF_expect(tRet2.isSuccess(), true, "LLKA_superpositionMatrix() returned unexpected value " + LLKA::errorToString(tRet2.failure()))
+    auto matrix = tRet2.success();
+
+    auto tRet3 = LLKA::applyTransformation(real_AB01_bkbn, matrix);
+    EFF_expect(tRet3.isSuccess(), true, "LLKA_applyTransformation() returned unexpected value " + LLKA::errorToString(tRet3.failure()))
+
+    LLKA::Points expected{
+        { 0.950860168366356, -4.10490242639581, 1.88352814333396 },
+        { 0.50054990344796, -3.69993907500445, 0.514678133530478 },
+        { -0.347244679657512, -4.71592059085125, -0.00580232173625572 },
+        { -0.318861255763144, -2.43716579580966, 0.473326017357792 },
+        { 0.506320258152502, -1.32662194302102, 0.113179074950623 },
+        { -0.0811260469759572, 0.154118620506023, 0.0681432878857751},
+        { -0.647318283320744, 0.253840078930681, -1.40665838767353 },
+        { 0.237737393186242, 0.145726060576478, -2.52768907793944 },
+        { -0.603024580420967, 0.282861734520597, -3.76182161161158 },
+        { -1.56591988716846, -0.783314033669751, -3.80479671565305 },
+        { -1.41697603269085, 1.56517005180424, -3.86385794226367 },
+        { -1.71799695715546, 1.88014731841389, -5.20722860018113 }
+    };
+
+    for (size_t idx = 0; idx < 12; idx++)
+        CHECK_POINT(real_AB01_bkbn[idx].coords, expected[idx]);
+
+    auto tRet4 = LLKA::rmsd(real_AB01_bkbn, ref_AB01_bkbn);
+    EFF_expect(tRet4.isSuccess(), true, "LLKA_rmsd() returned unexpected value " + LLKA::errorToString(tRet4.failure()))
+    auto rmsd = tRet4.success();
+
+    EFF_cmpFlt(rmsd, 0.147657613575976, "RMSD is wrong");
+}
+
+static
 auto connectivity_testConnectivity()
 {
     // Test based on results for 1BNA molecule
@@ -398,6 +444,7 @@ auto main() -> int
 
     superposition_testShifted();
     superposition_testStructure();
+    superposition_testStructureWithExplicitMatrix();
 
     NtC_testExtractPlainBackbone();
     NtC_testExtractExtendedBackbone();

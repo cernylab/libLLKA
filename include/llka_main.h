@@ -169,6 +169,15 @@ LLKA_API const char * LLKA_CC LLKA_errorToString(LLKA_RetCode tRet);
 LLKA_API void LLKA_CC LLKA_initMatrix(size_t rows, size_t columns, LLKA_Matrix *matrix);
 
 /*!
+ * Duplicates a matrix
+ *
+ * @param[in] Matrix to duplicate
+ *
+ * @returns Duplicated matrix
+ */
+LLKA_API LLKA_Matrix LLKA_CC LLKA_duplicateMatrix(const LLKA_Matrix *matrix);
+
+/*!
  * Creates \p LLKA_Points structure from array of \p LLKA_Point s. The returned \p LLKA_Points contains copies of the input points.
  *
  * @param[in] points Array of \p LLKA_Point s

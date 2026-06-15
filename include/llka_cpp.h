@@ -236,7 +236,6 @@ private:
     bool m_isSuccess;
     bool m_movedAway;
 };
-template <typename S> using RCResult = Result<S, LLKA_RetCode>;
 
 template <typename F>
 class Result<void, F> {
@@ -304,7 +303,7 @@ public:
 
         if (m_isSuccess)
             throw std::runtime_error{"Cannot get failed value for a succesful result"};
-        return failure;
+        return m_failure;
     }
 
     bool isSuccess() const
@@ -426,11 +425,105 @@ private:
     bool m_movedAway;
 };
 
+template <typename S> using RCResult = Result<S, LLKA_RetCode>;
+
 //
 // Main
 //
 
 using Points = std::vector<LLKA_Point>; // TODO: Revise this when we figure out how to do memory alignment of point arrays
+
+class LLKA_CPP_API Matrix {
+public:
+#ifdef LLKA_PLATFORM_EMSCRIPTEN
+    Matrix() noexcept :
+        nCols{0},
+        nRows{0},
+        data{nullptr}
+    {
+    }
+#endif // LLKA_PLATFORM_EMSCRIPTEN
+
+    explicit Matrix(LLKA_Matrix matrix) noexcept :
+        nCols{matrix.nCols},
+        nRows{matrix.nRows},
+        data{matrix.data}
+    {
+    }
+
+    explicit Matrix(double *data, size_t nRows, size_t nCols) noexcept :
+        nCols{nCols},
+        nRows{nRows},
+        data{data}
+    {
+    }
+
+    // Impl is in llka_cpp.cpp
+    Matrix(const Matrix &other) noexcept;
+
+    Matrix(Matrix &&other) noexcept :
+        nCols{other.nCols},
+        nRows{other.nRows},
+        data{other.data}
+    {
+        other.data = nullptr;
+    }
+
+    // Impl is in llka_cpp.cpp
+    ~Matrix() noexcept;
+
+    const size_t nCols;
+    const size_t nRows;
+
+    operator LLKA_Matrix() noexcept
+    {
+        LLKA_Matrix m{ data, nRows, nCols };
+        return m;
+    }
+
+    operator const LLKA_Matrix() const noexcept
+    {
+        LLKA_Matrix m{ data, nRows, nCols };
+        return m;
+    }
+
+    auto operator()(size_t row, size_t col) noexcept -> double
+    {
+        assert(row < nRows && col < nCols && "Attempted to get a matrix element that is outside the matrix dimensions");
+
+        return data[nRows * col + row];
+    }
+
+    // Impl is in llka_cpp.cpp
+    auto operator=(const Matrix &other) noexcept -> Matrix;
+
+    auto operator=(Matrix &&other) noexcept -> Matrix
+    {
+        const_cast<size_t&>(this->nCols) = other.nCols;
+        const_cast<size_t&>(this->nRows) = other.nRows;
+        this->data = other.data;
+
+        other.data = nullptr;
+
+        return *this;
+    }
+
+#ifdef LLKA_PLATFORM_EMSCRIPTEN
+    auto _emsGet_nCols() const -> size_t
+    {
+        return nRows;
+    }
+
+    auto _emsGet_nRows() const -> size_t
+    {
+        return nRows;
+    }
+#endif // LLKA_PLATFORM_EMSCRIPTEN
+
+private:
+    double *data;
+
+};
 
 LLKA_CPP_API
 auto operator<<(std::ostream &os, const LLKA_Point &pt) -> std::ostream &;
@@ -573,6 +666,12 @@ auto measureDistance(const Atom &a, const Atom &b) -> T;
 //
 
 LLKA_CPP_API
+auto applyTransformation(Points &what, const Matrix &matrix) noexcept -> RCResult<void>;
+
+LLKA_CPP_API
+auto applyTransformation(Structure &what, const Matrix &matrix) noexcept -> RCResult<void>;
+
+LLKA_CPP_API
 auto centroid(const Points &points) noexcept -> LLKA_Point;
 
 LLKA_CPP_API
@@ -589,6 +688,15 @@ auto superpose(Points &what, const Points &onto) noexcept -> RCResult<double>;
 
 LLKA_CPP_API
 auto superpose(Structure &what, const Structure &onto) noexcept -> RCResult<double>;
+
+LLKA_CPP_API
+auto superpositionMatrix(Structure &what, const Structure &onto) noexcept -> RCResult<Matrix>;
+
+LLKA_CPP_API
+auto superpositionMatrix(Points &what, const Points &onto) noexcept -> RCResult<Matrix>;
+
+LLKA_CPP_API
+auto superpositionMatrix(StructureView &what, const StructureView &onto) noexcept -> RCResult<Matrix>;
 
 //
 // Segmentation
@@ -761,6 +869,9 @@ auto nameToNtC(const std::string &name) noexcept -> LLKA_NtC;
 
 LLKA_CPP_API
 auto NtCToName(LLKA_NtC ntc) noexcept -> std::string;
+
+LLKA_CPP_API
+auto NtCStructure(LLKA_NtC ntc) noexcept -> Structure;
 
 using StepInfo = LLKA_StepInfo;
 LLKA_CPP_API
@@ -1179,6 +1290,13 @@ template LLKA_CPP_API auto makeStdVector<int32_t>();
         .function("success", std::function<typename LLKA::ResultSuccessReturnType<S, std::is_copy_constructible_v<S>>::RT (LLKA::RCResult<S>&)>(&LLKA::RCResult<S>::success)) \
         .function("const_success", std::function<const S &(const LLKA::RCResult<S>&)>(&LLKA::RCResult<S>::const_success)) \
         .function("isSuccess", &LLKA::RCResult<S>::isSuccess)
+#define _EMX_MK_RCRESULT_VOID \
+    emscripten::class_<LLKA::RCResult<void>>("RCResult_void") \
+        .constructor() \
+        .constructor<LLKA_RetCode, bool>() \
+        .function("failure", &LLKA::RCResult<void>::failure) \
+        .function("isSuccess", &LLKA::RCResult<void>::isSuccess)
+
 
 EMSCRIPTEN_BINDINGS(LLKA)
 {
@@ -1188,6 +1306,16 @@ EMSCRIPTEN_BINDINGS(LLKA)
 
     emscripten::register_vector<std::string>("StringVector");
     emscripten::register_vector<int32_t>("Int32Vector");
+
+    // Note that this is just a partial implementation
+    // that is good enough to pass the Matrix object around
+    // in JS code as a mostly opaque entity
+    emscripten::class_<LLKA::Matrix>("Matrix")
+        .constructor<>()
+        .constructor<LLKA::Matrix &>()
+        _EMX_CLS_PROP_READONLY(nCols, LLKA::Matrix)
+        _EMX_CLS_PROP_READONLY(nRows, LLKA::Matrix)
+    ;
 
     emscripten::enum_<LLKA_RetCode>("RetCode")
         _EMX_ENUM_VAL(LLKA_OK)
@@ -1210,6 +1338,8 @@ EMSCRIPTEN_BINDINGS(LLKA)
     ;
 
     emscripten::function("errorToString", &LLKA::errorToString);
+
+    _EMX_MK_RCRESULT_VOID;
 
     //
     // Structure
@@ -1274,13 +1404,23 @@ EMSCRIPTEN_BINDINGS(LLKA)
     //
 
     _EMX_MK_RCRESULT(double);
+    _EMX_MK_RCRESULT(LLKA::Matrix);
 
     emscripten::function("centroidPoints", emscripten::select_overload<LLKA_Point(const LLKA::Points&)>(&LLKA::centroid));
     emscripten::function("centroidStructure", emscripten::select_overload<LLKA_Point(const LLKA::Structure&)>(&LLKA::centroid));
     emscripten::function("rmsdPoints", emscripten::select_overload<LLKA::RCResult<double>(const LLKA::Points&, const LLKA::Points&)>(&LLKA::rmsd));
     emscripten::function("rmsd", emscripten::select_overload<LLKA::RCResult<double>(const LLKA::Structure&, const LLKA::Structure&)>(&LLKA::rmsd));
-    emscripten::function("superposePoints", emscripten::select_overload<LLKA::RCResult<double>(LLKA::Points&, const LLKA::Points &)>(&LLKA::superpose));
+
+    emscripten::function("applyTransformationPoints", emscripten::select_overload<LLKA::RCResult<void>(LLKA::Points&, const LLKA::Matrix&)>(&LLKA::applyTransformation));
+    emscripten::function("applyTransformationStructure", emscripten::select_overload<LLKA::RCResult<void>(LLKA::Structure&, const LLKA::Matrix&)>(&LLKA::applyTransformation));
+
     emscripten::function("superposeStructures", emscripten::select_overload<LLKA::RCResult<double>(LLKA::Structure &, const LLKA::Structure &)>(&LLKA::superpose));
+    emscripten::function("superposePoints", emscripten::select_overload<LLKA::RCResult<double>(LLKA::Points&, const LLKA::Points &)>(&LLKA::superpose));
+
+    emscripten::function("superpositionMatrixPoints", emscripten::select_overload<LLKA::RCResult<LLKA::Matrix>(LLKA::Points&, const LLKA::Points&)>(&LLKA::superpositionMatrix));
+    emscripten::function("superpositionMatrixStructures", emscripten::select_overload<LLKA::RCResult<LLKA::Matrix>(LLKA::Structure&, const LLKA::Structure&)>(&LLKA::superpositionMatrix));
+    emscripten::function("superpositionMatrixStructureViews", emscripten::select_overload<LLKA::RCResult<LLKA::Matrix>(LLKA::StructureView&, const LLKA::StructureView&)>(&LLKA::superpositionMatrix));
+
     emscripten::function("splitByAltIds", &LLKA::splitByAltIds);
     emscripten::function("splitStructureToDinucleotideSteps", &LLKA::splitStructureToDinucleotideSteps);
 
@@ -1500,9 +1640,11 @@ EMSCRIPTEN_BINDINGS(LLKA)
     ;
 
     _EMX_MK_RCRESULT(LLKA_StepInfo);
+    _EMX_MK_RCRESULT(LLKA_StepMetrics);
 
     emscripten::function("backboneAtomIndex", &LLKA::backboneAtomIndex);
     emscripten::function("calculateStepMetrics", &LLKA::calculateStepMetrics);
+    emscripten::function("calculateStepMetricsDifferenceAgainstReference", &LLKA::calculateStepMetricsDifferenceAgainstReference);
     emscripten::function("crossResidueMetric", &LLKA::crossResidueMetric);
     emscripten::function(
         "crossResidueMetricAtomsFromBases",
@@ -1530,6 +1672,7 @@ EMSCRIPTEN_BINDINGS(LLKA)
     emscripten::function("CANAToName", &LLKA::CANAToName);
     emscripten::function("nameToNtC", &LLKA::nameToNtC);
     emscripten::function("NtCToName", &LLKA::NtCToName);
+    emscripten::function("NtCStructure", &LLKA::NtCStructure);
     emscripten::function("structureIsStep", &LLKA::structureIsStep);
 
     //

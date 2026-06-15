@@ -18,6 +18,16 @@ void LLKA_CC LLKA_initMatrix(size_t rows, size_t cols, LLKA_Matrix *matrix)
     matrix->nCols = cols;
 }
 
+LLKA_Matrix LLKA_CC LLKA_duplicateMatrix(const LLKA_Matrix *matrix)
+{
+    LLKA_Matrix dup;
+    LLKA_initMatrix(matrix->nRows, matrix->nCols, &dup);
+
+    std::memcpy(dup.data, matrix->data, sizeof(double) * matrix->nRows * matrix->nCols);
+
+    return dup;
+}
+
 void LLKA_CC LLKA_destroyPoints(const LLKA_Points *points)
 {
     delete [] points->points;

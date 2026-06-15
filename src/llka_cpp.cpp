@@ -17,6 +17,7 @@
 #include <util/geometry.h>
 
 #include <algorithm>
+#include <cassert>
 #include <cstring>
 #include <memory>
 #include <ostream>
@@ -88,6 +89,42 @@ auto operator<<(std::ostream &os, const LLKA_Point &pt) -> std::ostream &
 {
     os << "[ " << pt.x << "; " << pt.y << "; " << pt.z << " ]";
     return os;
+}
+
+LLKA_CPP_API
+Matrix::Matrix(const Matrix &other) noexcept :
+    nCols{other.nCols},
+    nRows{other.nRows}
+{
+    LLKA_Matrix m{ other.data, other.nRows, other.nCols };
+
+    auto dup = LLKA_duplicateMatrix(&m);
+    this->data = dup.data;
+}
+
+LLKA_CPP_API
+Matrix::~Matrix() noexcept
+{
+    if (data == nullptr) return;
+
+    // We have taken ownership of the data that originally was in the LLKA_Matrix object.
+    // We need to re-create a dummy LLKA_Matrix object again to pass it to the destructor
+    // for cleanup
+    LLKA_Matrix m{ data, nRows, nCols };
+    LLKA_destroyMatrix(&m);
+}
+
+LLKA_CPP_API
+auto Matrix::operator=(const Matrix &other) noexcept -> Matrix
+{
+    LLKA_Matrix m{ other.data, other.nRows, other.nCols };
+
+    auto dup = LLKA_duplicateMatrix(&m);
+    const_cast<size_t&>(this->nCols) = dup.nCols;
+    const_cast<size_t&>(this->nRows) = dup.nRows;
+    this->data = dup.data;
+
+    return *this;
 }
 
 auto errorToString(LLKA_RetCode tRet) -> std::string
@@ -368,6 +405,37 @@ template LLKA_CPP_API auto measureDistance<long double>(const Atom &a, const Ato
 // Superposition
 //
 
+auto applyTransformation(Points &what, const Matrix &matrix) noexcept -> RCResult<void>
+{
+    LLKA_Points cWhat{
+        { what.data() },
+        what.size()
+    };
+    LLKA_Matrix cMatrix = matrix;
+
+    auto tRet = LLKA_applyTransformationPoints(&cWhat, &cMatrix);
+    if (tRet != LLKA_OK)
+        return RCResult<void>::fail(tRet);
+
+    return RCResult<void>::succeed();
+}
+
+auto applyTransformation(Structure &what, const Matrix &matrix) noexcept -> RCResult<void>
+{
+    auto wWhat = helpers::struToWrappedCStru(what);
+    LLKA_Matrix cMatrix = matrix;
+
+    auto tRet = LLKA_applyTransformationStructure(&wWhat.cStru, &cMatrix);
+    if (tRet != LLKA_OK)
+        return RCResult<void>::fail(tRet);
+
+    // Map the results back
+    for (size_t idx = 0; idx < what.size(); idx++)
+        what[idx].coords = wWhat.cAtoms[idx].coords;
+
+    return RCResult<void>::succeed();
+}
+
 auto centroid(const Points &points) noexcept -> LLKA_Point
 {
     // TODO: We are mapping the points vector memory directly onto
@@ -453,6 +521,54 @@ auto superpose(Structure &what, const Structure &onto) noexcept -> RCResult<doub
         what[idx].coords = wWhat.cAtoms[idx].coords;
 
     return RCResult<double>::succeed(rmsd);
+}
+
+auto superpositionMatrix(Points &what, const Points &onto) noexcept -> RCResult<Matrix>
+{
+    LLKA_Points cWhat{
+        { what.data() },
+        what.size()
+    };
+    const LLKA_Points cOnto{
+        { const_cast<LLKA_Point *>(onto.data()) },   // LLKA_Points expects mutable array
+        onto.size()
+    };
+
+    LLKA_Matrix cMatrix;
+    auto tRet = LLKA_superpositionMatrixPoints(&cWhat, &cOnto, &cMatrix);
+    if (tRet != LLKA_OK)
+        return RCResult<Matrix>::fail(tRet);
+
+    auto matrix = Matrix(cMatrix);
+    return RCResult<Matrix>::succeed(std::move(matrix));
+}
+
+auto superpositionMatrix(Structure &what, const Structure &onto) noexcept -> RCResult<Matrix>
+{
+    auto wWhat = helpers::struToWrappedCStru(what);
+    const auto wOnto = helpers::struToWrappedCStru(onto);
+
+    LLKA_Matrix cMatrix;
+    auto tRet = LLKA_superpositionMatrixStructures(&wWhat.cStru, &wOnto.cStru, &cMatrix);
+    if (tRet != LLKA_OK)
+        return RCResult<Matrix>::fail(tRet);
+
+    auto matrix = Matrix(cMatrix);
+    return RCResult<Matrix>::succeed(std::move(matrix));
+}
+
+auto superpositionMatrix(StructureView &what, const StructureView &onto) noexcept -> RCResult<Matrix>
+{
+    auto wWhat = helpers::struViewToWrappedCStru(what);
+    const auto wOnto = helpers::struViewToWrappedCStru(onto);
+
+    LLKA_Matrix cMatrix;
+    auto tRet = LLKA_superpositionMatrixStructures(&wWhat.cStru, &wOnto.cStru, &cMatrix);
+    if (tRet != LLKA_OK)
+        return RCResult<Matrix>::fail(tRet);
+
+    auto matrix = Matrix(cMatrix);
+    return RCResult<Matrix>::succeed(std::move(matrix));
 }
 
 #ifdef LLKA_PLATFORM_EMSCRIPTEN
@@ -745,6 +861,15 @@ auto nameToNtC(const std::string &name) noexcept -> LLKA_NtC
 auto NtCToName(LLKA_NtC ntc) noexcept -> std::string
 {
     return LLKA_NtCToName(ntc);
+}
+
+auto NtCStructure(LLKA_NtC ntc) noexcept -> Structure
+{
+    auto cStru = LLKA_NtCStructure(ntc);
+    auto stru = makeStructure(cStru.atoms, cStru.nAtoms);
+    LLKA_destroyStructure(&cStru);
+
+    return stru;
 }
 
 auto structureIsStep(const Structure &stru) noexcept -> RCResult<LLKA_StepInfo>
