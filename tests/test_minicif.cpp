@@ -262,6 +262,200 @@ auto test_unterminated_quote()
     LLKA_destroyString(error);
 }
 
+static
+auto test_no_entry_category()
+{
+    static const char *cifText =
+        "data_\n"
+        "loop_\n"
+        "_atom_site.group_PDB\n"
+        "_atom_site.id\n"
+        "_atom_site.type_symbol\n"
+        "_atom_site.label_atom_id\n"
+        "_atom_site.label_alt_id\n"
+        "_atom_site.label_comp_id\n"
+        "_atom_site.label_asym_id\n"
+        "_atom_site.label_entity_id\n"
+        "_atom_site.label_seq_id\n"
+        "_atom_site.pdbx_PDB_ins_code\n"
+        "_atom_site.segment_id\n"
+        "_atom_site.cartn_x\n"
+        "_atom_site.cartn_y\n"
+        "_atom_site.cartn_z\n"
+        "_atom_site.occupancy\n"
+        "_atom_site.B_iso_or_equiv\n"
+        "_atom_site.cartn_x_esd\n"
+        "_atom_site.cartn_y_esd\n"
+        "_atom_site.cartn_z_esd\n"
+        "_atom_site.occupancy_esd\n"
+        "_atom_site.B_iso_or_equiv_esd\n"
+        "_atom_site.pdbx_formal_charge\n"
+        "_atom_site.auth_seq_id\n"
+        "_atom_site.auth_comp_id\n"
+        "_atom_site.auth_asym_id\n"
+        "_atom_site.auth_atom_id\n"
+        "_atom_site.pdbx_PDB_model_num\n"
+        "ATOM 1  P P     . DA A 1 99 . . 8.258  14.006  12.104 1 30 ? ? ? ? ? ? 1 DT A P     1\n"
+        "#\n"
+        "";
+
+    LLKA_ImportedStructure importedStru{};
+    char *error;
+
+    auto tRet = LLKA_cifTextToStructure(cifText, &importedStru, &error, LLKA_MINICIF_ALLOW_NO_ENTRY_CATEGORY);
+    EFF_expect(tRet, LLKA_OK, "unexpected return value");
+    EFF_expect(error, nullptr, "error should have been set to nullptr");
+
+    EFF_expect(importedStru.structure.nAtoms, 1ULL, "wrong number of atoms in structure");
+    EFF_expect(importedStru.structure.atoms[0].label_seq_id, 99, "unexpected label_seq_id");
+    EFF_expect(importedStru.entry.id, "", "unexpected entry id");
+
+    LLKA_destroyImportedStructure(&importedStru);
+}
+
+static
+auto test_no_entry_category_not_allowed()
+{
+    static const char *cifText =
+        "data_\n"
+        "loop_\n"
+        "_atom_site.group_PDB\n"
+        "_atom_site.id\n"
+        "_atom_site.type_symbol\n"
+        "_atom_site.label_atom_id\n"
+        "_atom_site.label_alt_id\n"
+        "_atom_site.label_comp_id\n"
+        "_atom_site.label_asym_id\n"
+        "_atom_site.label_entity_id\n"
+        "_atom_site.label_seq_id\n"
+        "_atom_site.pdbx_PDB_ins_code\n"
+        "_atom_site.segment_id\n"
+        "_atom_site.cartn_x\n"
+        "_atom_site.cartn_y\n"
+        "_atom_site.cartn_z\n"
+        "_atom_site.occupancy\n"
+        "_atom_site.B_iso_or_equiv\n"
+        "_atom_site.cartn_x_esd\n"
+        "_atom_site.cartn_y_esd\n"
+        "_atom_site.cartn_z_esd\n"
+        "_atom_site.occupancy_esd\n"
+        "_atom_site.B_iso_or_equiv_esd\n"
+        "_atom_site.pdbx_formal_charge\n"
+        "_atom_site.auth_seq_id\n"
+        "_atom_site.auth_comp_id\n"
+        "_atom_site.auth_asym_id\n"
+        "_atom_site.auth_atom_id\n"
+        "_atom_site.pdbx_PDB_model_num\n"
+        "ATOM 1  P P     . DA A 1 99 . . 8.258  14.006  12.104 1 30 ? ? ? ? ? ? 1 DT A P     1\n"
+        "";
+
+    LLKA_ImportedStructure importedStru{};
+    char *error;
+
+    auto tRet = LLKA_cifTextToStructure(cifText, &importedStru, &error, 0);
+    EFF_expect(tRet, LLKA_E_BAD_DATA, "unexpected return value");
+    EFF_expect(error, "Category entry is not present in block ", "unexpected error message");
+
+    LLKA_destroyString(error);
+}
+
+static
+auto test_allow_broken_atomsite()
+{
+    static const char *cifText =
+        "data_\n"
+        "loop_\n"
+        "_atom_site.group_PDB\n"
+        "_atom_site.id\n"
+        "_atom_site.type_symbol\n"
+        "_atom_site.label_atom_id\n"
+        "_atom_site.label_alt_id\n"
+        "_atom_site.label_comp_id\n"
+        "_atom_site.label_asym_id\n"
+        "_atom_site.label_entity_id\n"
+        "_atom_site.label_seq_id\n"
+        "_atom_site.pdbx_PDB_ins_code\n"
+        "_atom_site.segment_id\n"
+        "_atom_site.cartn_x\n"
+        "_atom_site.cartn_y\n"
+        "_atom_site.cartn_z\n"
+        "_atom_site.occupancy\n"
+        "_atom_site.B_iso_or_equiv\n"
+        "_atom_site.cartn_x_esd\n"
+        "_atom_site.cartn_y_esd\n"
+        "_atom_site.cartn_z_esd\n"
+        "_atom_site.occupancy_esd\n"
+        "_atom_site.B_iso_or_equiv_esd\n"
+        "_atom_site.pdbx_formal_charge\n"
+        "_atom_site.auth_seq_id\n"
+        "_atom_site.auth_comp_id\n"
+        "_atom_site.auth_asym_id\n"
+        "_atom_site.auth_atom_id\n"
+        "_atom_site.pdbx_PDB_model_num\n"
+        " ATOM 8  N .     . DA . 1 20 . . -2.3707326 -4.507768  -0.94517957  1 20 ? ? ? ? ? ?  1 DA A N9    1\n"
+        "";
+
+    LLKA_ImportedStructure importedStru{};
+    char *error;
+
+    auto tRet = LLKA_cifTextToStructure(cifText, &importedStru, &error, LLKA_MINICIF_ALLOW_NO_ENTRY_CATEGORY | LLKA_MINICIF_ALLOW_BROKEN_ATOMSITE);
+    EFF_expect(tRet, LLKA_OK, "unexpected return value");
+    EFF_expect(error, nullptr, "error should have been set to nullptr");
+
+    EFF_expect(importedStru.structure.nAtoms, 1ULL, "wrong number of atoms in structure");
+    EFF_expect(importedStru.entry.id, "", "unexpected entry id");
+    EFF_expect(importedStru.structure.atoms[0].label_seq_id, 20, "unexpected label_seq_id");
+    EFF_expect(importedStru.structure.atoms[0].label_atom_id, "N9", "unexpected label_atom_id");
+    EFF_expect(importedStru.structure.atoms[0].label_asym_id, "A", "unexpected label_asym_id");
+
+    LLKA_destroyImportedStructure(&importedStru);
+}
+
+static
+auto test_allow_broken_atomsite_not_allowed()
+{
+    static const char *cifText =
+        "data_\n"
+        "loop_\n"
+        "_atom_site.group_PDB\n"
+        "_atom_site.id\n"
+        "_atom_site.type_symbol\n"
+        "_atom_site.label_atom_id\n"
+        "_atom_site.label_alt_id\n"
+        "_atom_site.label_comp_id\n"
+        "_atom_site.label_asym_id\n"
+        "_atom_site.label_entity_id\n"
+        "_atom_site.label_seq_id\n"
+        "_atom_site.pdbx_PDB_ins_code\n"
+        "_atom_site.segment_id\n"
+        "_atom_site.cartn_x\n"
+        "_atom_site.cartn_y\n"
+        "_atom_site.cartn_z\n"
+        "_atom_site.occupancy\n"
+        "_atom_site.B_iso_or_equiv\n"
+        "_atom_site.cartn_x_esd\n"
+        "_atom_site.cartn_y_esd\n"
+        "_atom_site.cartn_z_esd\n"
+        "_atom_site.occupancy_esd\n"
+        "_atom_site.B_iso_or_equiv_esd\n"
+        "_atom_site.pdbx_formal_charge\n"
+        "_atom_site.auth_seq_id\n"
+        "_atom_site.auth_comp_id\n"
+        "_atom_site.auth_asym_id\n"
+        "_atom_site.auth_atom_id\n"
+        "_atom_site.pdbx_PDB_model_num\n"
+        " ATOM 8  N .     . DA . 1 20 . . -2.3707326 -4.507768  -0.94517957  1 20 ? ? ? ? ? ?  1 DA A N9    1\n"
+        "";
+
+    LLKA_ImportedStructure importedStru{};
+    char *error;
+
+    auto tRet = LLKA_cifTextToStructure(cifText, &importedStru, &error, LLKA_MINICIF_ALLOW_NO_ENTRY_CATEGORY);
+    EFF_expect(tRet, LLKA_E_BAD_DATA, "unexpected return value");
+
+    LLKA_destroyString(error);
+}
+
 auto main(int, char **) -> int
 {
     test_ok();
@@ -273,4 +467,10 @@ auto main(int, char **) -> int
 
     test_quote_in_quotes();
     test_unterminated_quote();
+
+    test_no_entry_category();
+    test_no_entry_category_not_allowed();
+
+    test_allow_broken_atomsite();
+    test_allow_broken_atomsite_not_allowed();
 }

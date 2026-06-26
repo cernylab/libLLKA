@@ -172,7 +172,7 @@ void LLKA_CC LLKA_destroyAtom(const LLKA_Atom *atom)
     LLKAInternal::destroyString(atom->label_atom_id);
     LLKAInternal::destroyString(atom->label_entity_id);
     LLKAInternal::destroyString(atom->label_comp_id);
-    LLKAInternal::destroyString(atom->label_asym_id),
+    LLKAInternal::destroyString(atom->label_asym_id);
     LLKAInternal::destroyString(atom->auth_atom_id);
     LLKAInternal::destroyString(atom->auth_comp_id);
     LLKAInternal::destroyString(atom->auth_asym_id);

@@ -167,42 +167,107 @@ auto toCifData(const std::vector<Block> &blocks)
 }
 
 static
+auto processAtomSite(const std::vector<MiniCif::Block> &blocks)
+{
+    auto fixupAtom = [](LLKA_Atom &atom) {
+        if (atom.auth_atom_id == nullptr)
+            atom.auth_atom_id = LLKAInternal::duplicateString(atom.label_atom_id);
+        if (atom.auth_comp_id == nullptr)
+            atom.auth_comp_id = LLKAInternal::duplicateString(atom.label_comp_id);
+        if (atom.auth_asym_id == nullptr)
+            atom.auth_asym_id = LLKAInternal::duplicateString(atom.label_asym_id);
+        if (atom.pdbx_PDB_ins_code == nullptr)
+            atom.pdbx_PDB_ins_code = LLKAInternal::duplicateString(LLKA_NO_INSCODE);
+    };
+
+    return LLKAInternal::MiniCif::Applier<LLKAInternal::MiniCif::Categories::AtomSite>::apply(
+        blocks[0],
+        fixupAtom,
+        [](const LLKA_Atom &atom) { LLKA_destroyAtom(&atom); }
+    );
+}
+
+static
+auto processAtomSiteAllowBroken(const std::vector<MiniCif::Block> &blocks)
+{
+    auto fixupAtom = [](LLKA_Atom &atom) {
+        // If we have data in the auth_ fields but not in the label_ fields,
+        // copy the data from auth_ to label_. Otherwise just keep the label_
+        // fields empty, even though this pretty much renders the resulting
+        // structure unusable
+        if (atom.label_atom_id == nullptr) {
+            if (atom.auth_atom_id == nullptr) {
+                atom.auth_atom_id = LLKAInternal::duplicateString("");
+            }
+            atom.label_atom_id = LLKAInternal::duplicateString(atom.auth_atom_id);
+        }
+        if (atom.label_comp_id == nullptr) {
+            if (atom.auth_comp_id == nullptr) {
+                atom.auth_comp_id = LLKAInternal::duplicateString("");
+            }
+            atom.label_comp_id = LLKAInternal::duplicateString(atom.auth_comp_id);
+        }
+        if (atom.label_asym_id == nullptr) {
+            if (atom.auth_asym_id == nullptr) {
+                atom.auth_asym_id = LLKAInternal::duplicateString("");
+            }
+            atom.label_asym_id = LLKAInternal::duplicateString(atom.auth_asym_id);
+        }
+
+        // Now do the standard fixup where we fill out the auth_ data from label_
+        // data.
+        if (atom.auth_atom_id == nullptr)
+            atom.auth_atom_id = LLKAInternal::duplicateString(atom.label_atom_id);
+        if (atom.auth_comp_id == nullptr)
+            atom.auth_comp_id = LLKAInternal::duplicateString(atom.label_comp_id);
+        if (atom.auth_asym_id == nullptr)
+            atom.auth_asym_id = LLKAInternal::duplicateString(atom.label_asym_id);
+        if (atom.pdbx_PDB_ins_code == nullptr)
+            atom.pdbx_PDB_ins_code = LLKAInternal::duplicateString(LLKA_NO_INSCODE);
+    };
+
+    return LLKAInternal::MiniCif::Applier<LLKAInternal::MiniCif::Categories::AtomSite_AllowBroken>::apply(
+        blocks[0],
+        fixupAtom,
+        [](const LLKA_Atom &atom) { LLKA_destroyAtom(&atom); }
+    );
+}
+
+static
 auto toStructure(const std::string_view &view, LLKA_ImportedStructure *importedStru, char **error, int32_t options)
 {
+    std::memset(importedStru, 0, sizeof(LLKA_ImportedStructure));
+
     try {
         auto blocks = parse(view);
 
         // TODO: We should look into the potential memory leaks here if we get unexpected data
 
-        auto [ entires, nEntries ] = LLKAInternal::MiniCif::Applier<LLKAInternal::MiniCif::Categories::Entry>::apply(
+        auto [ entries, nEntries ] = LLKAInternal::MiniCif::Applier<LLKAInternal::MiniCif::Categories::Entry>::apply(
             blocks[0],
             NoopFixup<LLKA_StructureEntry>,
-            [](const LLKA_StructureEntry &e) { LLKAInternal::destroyString(e.id);
-        });
-
-        if (nEntries < 1)
-            return LLKA_E_BAD_DATA;
-
-        auto fixupAtom = [](LLKA_Atom &atom) {
-            if (atom.auth_atom_id == nullptr)
-                atom.auth_atom_id = LLKAInternal::duplicateString(atom.label_atom_id);
-            if (atom.auth_comp_id == nullptr)
-                atom.auth_comp_id = LLKAInternal::duplicateString(atom.label_comp_id);
-            if (atom.auth_asym_id == nullptr)
-                atom.auth_asym_id = LLKAInternal::duplicateString(atom.label_asym_id);
-            if (atom.pdbx_PDB_ins_code == nullptr)
-                atom.pdbx_PDB_ins_code = LLKAInternal::duplicateString(LLKA_NO_INSCODE);
-        };
-        auto [ atoms, nAtoms ] = LLKAInternal::MiniCif::Applier<LLKAInternal::MiniCif::Categories::AtomSite>::apply(
-            blocks[0],
-            fixupAtom,
-            [](const LLKA_Atom &atom) { LLKA_destroyAtom(&atom); }
+            [](const LLKA_StructureEntry &e) { LLKAInternal::destroyString(e.id); },
+            (options & LLKA_MINICIF_ALLOW_NO_ENTRY_CATEGORY) > 0
         );
+
+        if (nEntries < 1) {
+            if (!(options & LLKA_MINICIF_ALLOW_NO_ENTRY_CATEGORY))
+                return LLKA_E_BAD_DATA;
+
+            importedStru->entry.id = LLKAInternal::duplicateString("");
+        } else {
+            importedStru->entry.id = entries[0].id;
+        }
+
+        bool allowBrokenAtomSite = options & LLKA_MINICIF_ALLOW_BROKEN_ATOMSITE;
+
+        auto [ atoms, nAtoms ] = allowBrokenAtomSite
+            ? processAtomSiteAllowBroken(blocks)
+            : processAtomSite(blocks);
 
         if (options & LLKA_MINICIF_NORMALIZE)
             LLKAInternal::MiniCif::normalize(atoms, nAtoms);
 
-        importedStru->entry.id = entires[0].id;
         importedStru->structure.atoms = atoms.release();
         importedStru->structure.nAtoms = nAtoms;
 
@@ -215,6 +280,16 @@ auto toStructure(const std::string_view &view, LLKA_ImportedStructure *importedS
 
         return LLKA_OK;
     } catch (const LLKAInternal::MiniCif::CifParseError &ex) {
+        LLKA_destroyString(importedStru->entry.id);
+
+        const auto len = std::strlen(ex.what());
+        *error = new char[len + 1];
+        std::strcpy(*error, ex.what());
+
+        return LLKA_E_BAD_DATA;
+    } catch (const LLKAInternal::MiniCif::CifSchemaError &ex) {
+        LLKA_destroyString(importedStru->entry.id);
+
         const auto len = std::strlen(ex.what());
         *error = new char[len + 1];
         std::strcpy(*error, ex.what());
