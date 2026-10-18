@@ -117,6 +117,11 @@ Matrix::~Matrix() noexcept
 LLKA_CPP_API
 auto Matrix::operator=(const Matrix &other) noexcept -> Matrix
 {
+    if (data != nullptr) {
+        LLKA_Matrix m{ data, nCols, nRows };
+        LLKA_destroyMatrix(&m);
+    }
+
     LLKA_Matrix m{ other.data, other.nCols, other.nRows };
 
     auto dup = LLKA_duplicateMatrix(&m);
