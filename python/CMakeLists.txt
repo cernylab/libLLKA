@@ -43,6 +43,7 @@ if (BUILD_TESTING)
         test_api_coverage
         test_classification
         test_connectivity
+        test_examples
         test_extract_backbone
         test_measurements
         test_minicif
@@ -68,6 +69,11 @@ if (BUILD_TESTING)
             "LLKA_TEST_C_COMPILER=${CMAKE_C_COMPILER}"
             "LLKA_TEST_C_FLAGS=${LLKA_PYTHON_TEST_C_FLAGS}"
         )
+    endif ()
+
+    # test_examples compares the output of the Python examples with the output of the C examples
+    if (BUILD_EXAMPLES AND NOT EMSCRIPTEN)
+        list(APPEND LLKA_PYTHON_TEST_ENV "LLKA_C_EXAMPLES_DIR=${PROJECT_BINARY_DIR}/examples")
     endif ()
 
     foreach (test_module ${LLKA_PYTHON_TESTS})

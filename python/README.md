@@ -39,6 +39,9 @@ the bindings.
 
 Example
 ---
+Complete example programs are in [examples](examples). They are Python
+counterparts of the console examples of libLLKA. A short example follows:
+
 ```python
 import math
 import llka
