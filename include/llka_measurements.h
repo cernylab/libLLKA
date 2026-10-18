@@ -5,6 +5,8 @@
 
 #include "llka_structure.h"
 
+LLKA_BEGIN_API_FUNCTIONS
+
 LLKA_API float LLKA_CC LLKA_measureAnglef(const LLKA_Atom *a, const LLKA_Atom *b, const LLKA_Atom *c);
 LLKA_API double LLKA_CC LLKA_measureAngle(const LLKA_Atom *a, const LLKA_Atom *b, const LLKA_Atom *c);
 
@@ -13,5 +15,7 @@ LLKA_API double LLKA_CC LLKA_measureDihedral(const LLKA_Atom *a, const LLKA_Atom
 
 LLKA_API float LLKA_CC LLKA_measureDistancef(const LLKA_Atom *a, const LLKA_Atom *b);
 LLKA_API double LLKA_CC LLKA_measureDistance(const LLKA_Atom *a, const LLKA_Atom *b);
+
+LLKA_END_API_FUNCTIONS
 
 #endif /* _LLKA_MEASUREMENTS_H */

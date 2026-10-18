@@ -232,7 +232,7 @@ LLKA_API LLKA_Atom LLKA_CC LLKA_emptyAtom(void);
  *
  * @return A pointer to the first atom that matches the criteria, or <tt>NULL</tt> if no matching atom was found.
  */
-LLKA_API LLKA_Atom * LLKA_findAtom(
+LLKA_API LLKA_Atom * LLKA_CC LLKA_findAtom(
     LLKA_Structure *stru,
     const char *label_atom_id,
     const char *label_comp_id,
@@ -257,7 +257,7 @@ LLKA_API LLKA_Atom * LLKA_findAtom(
  *
  * @return A pointer to the first atom that matches the criteria, or <tt>NULL</tt> if no matching atom was found.
  */
-LLKA_API const LLKA_Atom * LLKA_findAtomView(
+LLKA_API const LLKA_Atom * LLKA_CC LLKA_findAtomView(
     LLKA_StructureView *view,
     const char *label_atom_id,
     const char *label_comp_id,
