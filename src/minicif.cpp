@@ -36,6 +36,13 @@ auto compareAtoms(const LLKA_Atom &lhs, const LLKA_Atom &rhs)
     if (lhs.pdbx_PDB_model_num < rhs.pdbx_PDB_model_num)
         return true;
 
+    if (lhs.label_entity_id != rhs.label_entity_id)
+        return lhs.label_entity_id < rhs.label_entity_id;
+
+    auto cmp = std::strcmp(lhs.label_asym_id, rhs.label_asym_id);
+    if (cmp != 0)
+        return cmp < 0;
+
     return lhs.label_seq_id < rhs.label_seq_id;
 }
 
