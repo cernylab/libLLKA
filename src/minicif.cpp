@@ -333,7 +333,7 @@ LLKA_RetCode LLKA_CC LLKA_cifData_deleteBlock(LLKA_CifData *data, size_t idx)
         auto newBlocks = new LLKA_CifDataBlock[data->nBlocks + 1];
 
         std::memcpy(newBlocks, data->blocks, sizeof(LLKA_CifDataBlock) * idx);
-        std::memcpy(newBlocks + idx, data->blocks + idx + 1, sizeof(LLKA_CifDataBlock) * (data->nBlocks - idx));
+        std::memcpy(newBlocks + idx, data->blocks + idx + 1, sizeof(LLKA_CifDataBlock) * (data->nBlocks - idx - 1));
 
         delete [] data->blocks;
         data->blocks = newBlocks;
