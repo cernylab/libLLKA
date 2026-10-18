@@ -103,7 +103,7 @@ using ClusterNuAnglesSchema = Csv::Schema<
 	Csv::NamedField<"nu2_1_meanValue", Setters::NuAngleMetrics<LLKA_ClusterNuAngles, &LLKA_ClusterNuAngles::firstNucleotide,  &LLKA_NuAnglesMetrics::nu_2, &LLKA_ClassificationMetric::meanValue>>,
 	Csv::NamedField<"nu2_1_deviation", Setters::NuAngleMetrics<LLKA_ClusterNuAngles, &LLKA_ClusterNuAngles::firstNucleotide,  &LLKA_NuAnglesMetrics::nu_2, &LLKA_ClassificationMetric::deviation>>,
 	Csv::NamedField<"nu3_1_meanValue", Setters::NuAngleMetrics<LLKA_ClusterNuAngles, &LLKA_ClusterNuAngles::firstNucleotide,  &LLKA_NuAnglesMetrics::nu_3, &LLKA_ClassificationMetric::meanValue>>,
-	Csv::NamedField<"nu3_1_deviation", Setters::NuAngleMetrics<LLKA_ClusterNuAngles, &LLKA_ClusterNuAngles::firstNucleotide,  &LLKA_NuAnglesMetrics::nu_3, &LLKA_ClassificationMetric::meanValue>>,
+	Csv::NamedField<"nu3_1_deviation", Setters::NuAngleMetrics<LLKA_ClusterNuAngles, &LLKA_ClusterNuAngles::firstNucleotide,  &LLKA_NuAnglesMetrics::nu_3, &LLKA_ClassificationMetric::deviation>>,
 	Csv::NamedField<"nu4_1_meanValue", Setters::NuAngleMetrics<LLKA_ClusterNuAngles, &LLKA_ClusterNuAngles::firstNucleotide,  &LLKA_NuAnglesMetrics::nu_4, &LLKA_ClassificationMetric::meanValue>>,
 	Csv::NamedField<"nu4_1_deviation", Setters::NuAngleMetrics<LLKA_ClusterNuAngles, &LLKA_ClusterNuAngles::firstNucleotide,  &LLKA_NuAnglesMetrics::nu_4, &LLKA_ClassificationMetric::deviation>>,
 	// Second nucletotide
