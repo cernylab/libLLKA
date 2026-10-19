@@ -34,6 +34,47 @@ auto test_broken()
 }
 
 static
+auto test_blank_end()
+{
+    static const char *cifText =
+        "data_\n"
+        "_entry.id 1BNA\n"
+        "loop_\n"
+        "_atom_site.group_PDB\n"
+        "_atom_site.id\n"
+        "_atom_site.type_symbol\n"
+        "_atom_site.label_atom_id\n"
+        "_atom_site.label_alt_id\n"
+        "_atom_site.label_comp_id\n"
+        "_atom_site.label_asym_id\n"
+        "_atom_site.label_entity_id\n"
+        "_atom_site.label_seq_id\n"
+        "_atom_site.pdbx_PDB_ins_code\n"
+        "_atom_site.Cartn_x\n"
+        "_atom_site.Cartn_y\n"
+        "_atom_site.Cartn_z\n"
+        "_atom_site.occupancy\n"
+        "_atom_site.B_iso_or_equiv\n"
+        "_atom_site.pdbx_formal_charge\n"
+        "_atom_site.auth_seq_id\n"
+        "_atom_site.auth_comp_id\n"
+        "_atom_site.auth_asym_id\n"
+        "_atom_site.auth_atom_id\n"
+        "_atom_site.pdbx_PDB_model_num\n"
+        "ATOM   1   O \"O5'\" . DC  A 1 1  ? 18.935 34.195 25.617  1.00 64.35 ? 1   DC  A \"O5'\" 1\n"
+        "#\n\n";
+
+    LLKA_ImportedStructure importedStru{};
+    char *error;
+
+    auto tRet = LLKA_cifTextToStructure(cifText, &importedStru, &error, 0);
+    EFF_expect(tRet, LLKA_OK, "unexpected return value");
+    EFF_expect(error, nullptr, "error should have been set to nullptr");
+
+    LLKA_destroyImportedStructure(&importedStru);
+}
+
+static
 auto test_manipulate_categories()
 {
     auto data = LLKA_cifData_empty();
@@ -479,6 +520,7 @@ auto main(int, char **) -> int
 {
     test_ok();
     test_broken();
+    test_blank_end();
 
     test_manipulate_categories();
     test_manipulate_entries();

@@ -173,7 +173,8 @@ public:
         SAVE_BLOCK   = (1 << 5),
         STOP         = (1 << 6),
         GLOBAL_BLOCK = (1 << 7),
-        EMPTY        = (1 << 8)
+        EMPTY        = (1 << 8),
+        END_OF_FILE  = (1 << 9),
     };
 
     Token(std::string_view _text, Kind _kind) :
@@ -205,6 +206,8 @@ public:
         m_length{stream.length()}
     {
     }
+
+    auto exhausted() const { return m_cursor == m_length; }
 
     auto eat(bool ignoreQuotes = false)
     {
@@ -257,8 +260,6 @@ public:
         }
     }
 
-    auto exhausted() const { return m_cursor == m_length; }
-
     auto peekKind(bool ignoreQuotes = false)
     {
         if (m_priming.isPrimed(ignoreQuotes))
@@ -266,7 +267,7 @@ public:
 
         skipWhitespaces();
         if (exhausted()) [[ unlikely ]]
-            return Token::Kind::EMPTY;
+            return Token::Kind::END_OF_FILE;
 
         m_primedText = getCifToken(ignoreQuotes);
         m_primedKind = tokenKind(m_primedText);
@@ -282,6 +283,8 @@ public:
 private:
     auto getCifToken(bool ignoreQuotes) const -> std::string_view
     {
+        assert(m_cursor < m_length && "Cursor went past the end of the mmCIF input");
+
         auto ch = m_stream[m_cursor];
         const auto quote = (!ignoreQuotes && (ch == SINGLE_QUOTE || ch == DOUBLE_QUOTE)) * ch;    // Get quote char or set to zero if current char is not a quote
         bool unterminatedQuote = quote > 0;
@@ -420,7 +423,9 @@ auto nextDataBlock(Stream &stream) -> std::optional<Block>
         else if (kind == Token::Kind::DATA_BLOCK) {
             const auto [ _unused, name ] = splitOnFirst(stream.eat().text, '_');
             return std::make_optional<Block>(std::string{name});
-        } else
+        } else if (kind == Token::Kind::END_OF_FILE) [[unlikely]]
+            break;
+        else
             stream.eat();
     }
 
@@ -492,6 +497,8 @@ auto doLoop(Block &block, Stream &stream)
             stream.eatLine();
         else if (kind == Token::Kind::EMPTY)
             stream.eat();
+        else if (kind == Token::Kind::END_OF_FILE) [[unlikely]]
+            break;
         else if (kind == Token::Kind::VALUE) {
             if (columns.size() == 0)
                 throw CifParseError{"Loop on line " + std::to_string(stream.lineCounter) + " does not define any columns"};
@@ -598,6 +605,8 @@ auto parse(const std::string_view &data) -> std::vector<Block>
             throw CifParseError{"Unexpected value without name on line " + std::to_string(stream.lineCounter)};
         else if (kind == Token::Kind::EMPTY)
             stream.eat();
+        else if (kind == Token::Kind::END_OF_FILE) [[unlikely]]
+            break;
         else if (kind == Token::Kind::SAVE_BLOCK || kind == Token::Kind::STOP || kind == Token::Kind::GLOBAL_BLOCK) {
             stream.eat();
 
