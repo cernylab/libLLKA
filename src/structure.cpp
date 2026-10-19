@@ -255,7 +255,7 @@ LLKA_Atom LLKA_CC LLKA_emptyAtom(void)
     return empty;
 }
 
-LLKA_Atom * LLKA_findAtom(
+LLKA_Atom * LLKA_CC LLKA_findAtom(
     LLKA_Structure *stru,
     const char *label_atom_id,
     const char *label_comp_id,
@@ -278,8 +278,8 @@ LLKA_Atom * LLKA_findAtom(
     return nullptr;
 }
 
-const LLKA_Atom * LLKA_findAtomView(
-    LLKA_Structure *view,
+const LLKA_Atom * LLKA_CC LLKA_findAtomView(
+    LLKA_StructureView *view,
     const char *label_atom_id,
     const char *label_comp_id,
     const char *label_asym_id,
@@ -289,7 +289,7 @@ const LLKA_Atom * LLKA_findAtomView(
     int32_t pdbx_PDB_model_num
 ) {
     for (size_t idx = 0; idx < view->nAtoms; idx++) {
-        const LLKA_Atom *atom = &view->atoms[idx];
+        const LLKA_Atom *atom = view->atoms[idx];
 
         if (atomMatchesCriteria(
             atom,

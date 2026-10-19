@@ -27,6 +27,7 @@ Compile options
 - `-DUSE_ADDRESS_SANITIZER` `[ON|OFF]` Whether to use [ASan](https://github.com/google/sanitizers/wiki/AddressSanitizer) to check for all kinds of memory access errors and undefined behavior. May not be available on all platforms.
 
 - `-DBUILD_EXAMPLES` `[ON|OFF]` Whether to build examples. Note that some examples require additional dependencies to build. Consult the README files in the directories of the individual examples for more details.
+- `-DBUILD_PYTHON_BINDINGS` `[ON|OFF]` Whether to install the `llka` Python bindings and run their tests. The bindings require `-DBUILD_STATIC_LIBRARY=OFF -DBUILD_SHARED_LIBRARY=ON` and Python 3.10 or newer. See [python/README.md](python/README.md) for details.
 
 Compiling with Emscripten
 ---

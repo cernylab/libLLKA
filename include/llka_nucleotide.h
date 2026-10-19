@@ -148,7 +148,7 @@ LLKA_API LLKA_RetCode LLKA_CC LLKA_riboseMetrics(const LLKA_Structure *stru, LLK
  * @retval LLKA_OK Success
  * @rerval LLKA_E_INVALID_ARGUMENT Input structure does not seem to contain a ribose core
  */
-LLKA_API LLKA_RetCode LLKA_CC LLKA_riboseMetricsView(const LLKA_Structure *view, LLKA_RiboseMetrics *metrics);
+LLKA_API LLKA_RetCode LLKA_CC LLKA_riboseMetricsView(const LLKA_StructureView *view, LLKA_RiboseMetrics *metrics);
 
 /*!
  * Determines the sugar pucker of the ribose ring contained in the input structure.
