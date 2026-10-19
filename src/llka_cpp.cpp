@@ -110,14 +110,19 @@ Matrix::~Matrix() noexcept
     // We have taken ownership of the data that originally was in the LLKA_Matrix object.
     // We need to re-create a dummy LLKA_Matrix object again to pass it to the destructor
     // for cleanup
-    LLKA_Matrix m{ data, nRows, nCols };
+    LLKA_Matrix m{ data, nCols, nRows };
     LLKA_destroyMatrix(&m);
 }
 
 LLKA_CPP_API
 auto Matrix::operator=(const Matrix &other) noexcept -> Matrix
 {
-    LLKA_Matrix m{ other.data, other.nRows, other.nCols };
+    if (data != nullptr) {
+        LLKA_Matrix m{ data, nCols, nRows };
+        LLKA_destroyMatrix(&m);
+    }
+
+    LLKA_Matrix m{ other.data, other.nCols, other.nRows };
 
     auto dup = LLKA_duplicateMatrix(&m);
     const_cast<size_t&>(this->nCols) = dup.nCols;
