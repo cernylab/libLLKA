@@ -456,6 +456,25 @@ auto test_allow_broken_atomsite_not_allowed()
     LLKA_destroyString(error);
 }
 
+static
+auto test_normalize()
+{
+    LLKA_ImportedStructure importedStru{};
+    char *error;
+
+    auto tRet = LLKA_cifFileToStructure(LLKA_PathLiteral("./1BNA.cif"), &importedStru, &error, LLKA_MINICIF_NORMALIZE);
+    EFF_expect(tRet, LLKA_OK, "unexpected return value");
+    EFF_expect(error, nullptr, "error should have been set to nullptr");
+
+    EFF_expect(importedStru.structure.nAtoms, 566UL, "wrong number of atoms in structure");
+    EFF_expect(importedStru.structure.atoms[165].label_seq_id, 9, "unexpected label_seq_id for first checked atom");
+    EFF_expect(importedStru.structure.atoms[165].label_asym_id, "A", "unexpected label_asym_id for first checked atom");
+    EFF_expect(importedStru.structure.atoms[244].label_seq_id, 1, "unexpected label_seq_id for second checked atom");
+    EFF_expect(importedStru.structure.atoms[244].label_asym_id, "B", "unexpected label_asym_id second checked atom");
+
+    LLKA_destroyImportedStructure(&importedStru);
+}
+
 auto main(int, char **) -> int
 {
     test_ok();
@@ -473,4 +492,6 @@ auto main(int, char **) -> int
 
     test_allow_broken_atomsite();
     test_allow_broken_atomsite_not_allowed();
+
+    test_normalize();
 }
